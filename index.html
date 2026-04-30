@@ -1,2575 +1,1371 @@
-<html lang="zh-TW"><head>
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Warrant Ledger · 選擇權投資儀表板</title>
-<!-- No external font dependencies — works on GitHub Pages & offline -->
-<!--
-  GITHUB PAGES NOTE:
-  If hosting on GitHub Pages with Jekyll, add a file named "_config.yml"
-  in your repo root containing:  theme: null
-  OR rename this file to have no Jekyll front matter.
-  The style below also hard-overrides common Jekyll/Primer theme rules.
--->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<!-- GitHub Pages / Jekyll theme KILL SWITCH — must come before main styles -->
-<style>
-/* Neutralise GitHub Pages Primer / Cayman / Minima themes */
-body,html{all:unset;display:block}
-header,nav,main,footer,section,article,aside{all:unset;display:block}
-a{color:inherit !important;text-decoration:none !important;}
-button{outline:none !important;box-shadow:none !important;}
-input,select,textarea{outline:none !important;box-shadow:none !important;}
-*{box-sizing:border-box}
-</style>
-<style>
-/* ─────────────────────────────────────────────────────────────
-   COLOR SYSTEM
-   profit = #22c55e  (pure green, works on both LCD & OLED)
-   loss   = #f43f5e  (rose-red)
-   gold   = #c8a96e  (warm gold — NAV + accents)
-   FONTS: System only — no external deps, works on GitHub Pages
-   --font-serif : 'Georgia' style for headings
-   --font-sans  : system-ui bold for body / stat values
-───────────────────────────────────────────────────────────────*/
-:root{
-  --bg:       #0c0f1a;
-  --bg2:      #131726;
-  --bg3:      #191e30;
-  --border:   rgba(200,169,110,.16);
-  --border2:  rgba(200,169,110,.07);
-
-–gold:     #c8a96e;
-–gold2:    #e2c99a;
-–gold-dim: rgba(200,169,110,.10);
-–gold-bd:  rgba(200,169,110,.28);
-
-–profit:     #22c55e;
-–profit-bg:  rgba(34,197,94,.07);
-–profit-bd:  rgba(34,197,94,.22);
-
-–loss:       #f43f5e;
-–loss-bg:    rgba(244,63,94,.07);
-–loss-bd:    rgba(244,63,94,.22);
-
-–text:  #e6e1d8;
-–muted: #6b7691;
-
-/* System font stacks — always available, no HTTP request */
-–font-serif: Georgia,‘Times New Roman’,serif;
-–font-sans:  -apple-system,BlinkMacSystemFont,‘Helvetica Neue’,Arial,sans-serif;
-–font-num:   ‘Helvetica Neue’,Arial,sans-serif; /* tabular numerics */
-
-–r: 10px;
-–shadow: 0 6px 32px rgba(0,0,0,.45);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{
-font-family:var(–font-sans) !important;
-background:#0c0f1a !important;
-color:#e6e1d8 !important;
-min-height:100vh !important;
-font-size:15px !important;
-line-height:1.55 !important;
--webkit-font-smoothing:antialiased !important;
--moz-osx-font-smoothing:grayscale !important;
-color-scheme:dark !important;
-max-width:none !important;
-padding:0 !important;
-margin:0 !important;
-border:none !important;
-box-shadow:none !important;
-}
-/* Kill any GitHub Pages wrapper divs */
-.markdown-body,
-.page-header,
-.main-content,
-.project-name,
-.project-tagline,
-.site-header,
-.site-nav,
-.site-footer,
-.wrapper{
-all:unset !important;
-display:contents !important;
-}
-body::before{
-content:’’;position:fixed;inset:0;pointer-events:none;z-index:0;
-background:
-radial-gradient(ellipse 65% 40% at 88% 4%, rgba(200,169,110,.07) 0%,transparent 55%),
-radial-gradient(ellipse 50% 60% at 6% 88%, rgba(90,110,190,.05)  0%,transparent 55%),
-repeating-linear-gradient(0deg,  transparent,transparent 47px,rgba(200,169,110,.016) 48px),
-repeating-linear-gradient(90deg, transparent,transparent 47px,rgba(200,169,110,.016) 48px);
-}
-#app{position:relative;z-index:1}
-
-/* ── HEADER ── */
-header{
-background:linear-gradient(135deg,#080b16 0%,#0f1322 60%,#130e20 100%) !important;
-border-bottom:1px solid rgba(200,169,110,.16) !important;
-padding:0 28px !important;
-display:flex !important;align-items:center !important;justify-content:space-between !important;
-height:68px !important;position:sticky !important;top:0 !important;z-index:200 !important;
-box-shadow:0 2px 40px rgba(0,0,0,.65) !important;
-color:#e6e1d8 !important;
-}
-.logo-row{display:flex;align-items:center;gap:13px}
-.logo-mark{
-width:40px;height:40px;border-radius:10px;
-background:linear-gradient(135deg,#d4a843 0%,#7a5020 100%);
-display:flex;align-items:center;justify-content:center;
-font-size:20px;color:#fff;font-weight:700;
-box-shadow:0 0 0 1px rgba(255,255,255,.10),0 3px 14px rgba(200,169,110,.3);
-}
-.logo-text{font-family:var(–font-serif);font-size:22px;font-weight:700;color:#e2c99a !important;letter-spacing:.5px}
-.logo-sub{font-size:10px;letter-spacing:2.5px;color:#6b7691 !important;text-transform:uppercase;margin-top:1px}
-.hdr-nums{display:flex;gap:24px}
-.hnum{text-align:right}
-.hnum-lbl{font-size:10px;letter-spacing:2px;color:#6b7691 !important;text-transform:uppercase}
-.hnum-val{font-family:var(–font-num);font-size:21px;font-weight:800;letter-spacing:-0.3px}
-
-/* ── NAV ── gold tabs, no blue ── */
-nav{
-background:#131726 !important;
-border-bottom:1px solid rgba(200,169,110,.16) !important;
-padding:0 28px !important;
-display:flex !important;gap:0 !important;overflow-x:auto !important;
-}
-.nb{
-background:transparent !important;border:none !important;
-border-bottom:2px solid transparent !important;
-color:#6b7691 !important;
-padding:16px 20px !important;cursor:pointer !important;
-font-family:var(–font-sans) !important;font-size:14px !important;font-weight:600 !important;
-white-space:nowrap !important;transition:color .18s,border-color .18s !important;
-text-decoration:none !important;box-shadow:none !important;
-}
-.nb:hover{color:#e2c99a !important;text-decoration:none !important}
-.nb.active{
-color:#c8a96e !important;
-border-bottom-color:#c8a96e !important;
-font-weight:700 !important;
-background:transparent !important;
-}
-.nb-export{
-margin-left:auto !important;background:transparent !important;
-border:none !important;border-left:1px solid rgba(200,169,110,.16) !important;
-color:#6b7691 !important;padding:14px 18px !important;cursor:pointer !important;
-font-family:var(–font-sans) !important;font-size:12px !important;font-weight:600 !important;
-white-space:nowrap !important;transition:color .18s !important;letter-spacing:.5px !important;
-align-self:center !important;text-decoration:none !important;
-}
-
-/* ── BODY ── */
-.body{padding:26px 28px !important;background:#0c0f1a !important}
-
-/* ── STAT CARDS ── */
-.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:22px}
-.scard{
-background:#131726 !important;border:1px solid rgba(200,169,110,.16);
-border-radius:var(–r);padding:20px 22px;
-position:relative;overflow:hidden;
-transition:transform .2s,box-shadow .2s;
-}
-.scard:hover{transform:translateY(-2px);box-shadow:var(–shadow)}
-.scard::after{
-content:’’;position:absolute;top:-22px;right:-22px;
-width:90px;height:90px;border-radius:50%;pointer-events:none;
-background:radial-gradient(circle,rgba(200,169,110,.09),transparent 70%);
-}
-.sc-lbl{font-size:10px;letter-spacing:2.5px;color:#6b7691 !important;text-transform:uppercase;margin-bottom:9px;font-weight:600}
-.sc-val{color:#e6e1d8 !important;font-family:var(–font-num);font-size:34px;font-weight:800;line-height:1;letter-spacing:-0.5px}
-.sc-sub{font-size:12px;color:#6b7691 !important;margin-top:8px;font-weight:500}
-.sc-bar{height:2px;background:rgba(200,169,110,.12);border-radius:2px;margin-top:14px;overflow:hidden}
-.sc-bar-fill{height:100%;background:linear-gradient(90deg,#c8a96e,#e2c99a);border-radius:2px;transition:width .7s ease}
-
-/* colour helpers — !important to override GitHub Pages */
-.cp{color:#22c55e !important}
-.cl{color:#f43f5e !important}
-.cg{color:#c8a96e !important}
-.cm{color:#6b7691 !important}
-
-/* ── SECTION ── */
-.sec{
-background:#131726 !important;border:1px solid rgba(200,169,110,.16) !important;
-border-radius:var(–r) !important;overflow:hidden !important;
-margin-bottom:18px !important;box-shadow:0 3px 20px rgba(0,0,0,.28) !important;
-}
-.sec-hd{
-padding:15px 22px !important;border-bottom:1px solid rgba(200,169,110,.07) !important;
-display:flex !important;align-items:center !important;justify-content:space-between !important;
-background:linear-gradient(90deg,#191e30,#131726) !important;
-}
-.sec-title{font-family:var(–font-serif) !important;font-size:17px !important;font-weight:700 !important;color:#e2c99a !important;letter-spacing:.3px !important}
-.sec-sub{font-size:12px !important;color:#6b7691 !important}
-
-/* ── TABLE ── */
-.tw{overflow-x:auto !important}
-table{width:100% !important;border-collapse:collapse !important;font-size:14.5px !important}
-thead th{
-background:#191e30 !important;color:#6b7691 !important;
-font-size:10.5px !important;letter-spacing:1.8px !important;text-transform:uppercase !important;
-padding:12px 15px !important;text-align:left !important;
-border-bottom:1px solid rgba(200,169,110,.16) !important;white-space:nowrap !important;font-weight:500 !important;
-}
-tbody tr{transition:background .12s}
-tbody tr:hover{background:rgba(200,169,110,.04) !important}
-td{padding:12px 15px !important;border-bottom:1px solid rgba(200,169,110,.07) !important;vertical-align:middle !important;font-size:14.5px !important;color:#e6e1d8 !important}
-.td-name{font-weight:600 !important;color:#e2c99a !important;white-space:nowrap !important}
-.td-date{color:#6b7691 !important;font-size:13px !important;white-space:nowrap !important}
-
-/* ── BADGES ── */
-.bdg{display:inline-block !important;padding:4px 11px !important;border-radius:5px !important;font-size:13px !important;font-weight:700 !important}
-.bdg-p{background:rgba(34,197,94,.07) !important;color:#22c55e !important;border:1px solid rgba(34,197,94,.22) !important}
-.bdg-l{background:rgba(244,63,94,.07) !important;color:#f43f5e !important;border:1px solid rgba(244,63,94,.22) !important}
-
-/* ── EDIT INPUTS ── */
-.edit-inp{
-background:rgba(200,169,110,.07) !important;border:1px solid rgba(200,169,110,.22) !important;
-color:#e6e1d8 !important;padding:5px 10px !important;border-radius:6px !important;
-font-family:var(–font-sans) !important;font-size:14px !important;
-outline:none !important;transition:border-color .18s !important;width:100% !important;min-width:70px !important;
-}
-.edit-inp:focus{border-color:#c8a96e !important;box-shadow:0 0 0 2px rgba(200,169,110,.13) !important}
-.edit-inp.wide{min-width:160px}
-
-/* ── ROW BUTTONS ── */
-.rab{padding:4px 11px !important;border-radius:6px !important;cursor:pointer !important;
-font-size:12px !important;font-family:var(–font-sans) !important;
-border:1px solid !important;transition:all .15s !important;white-space:nowrap !important;
-text-decoration:none !important;outline:none !important;}
-.btn-edit{background:rgba(200,169,110,.10) !important;border-color:rgba(200,169,110,.28) !important;color:#c8a96e !important;}
-.btn-edit:hover{background:rgba(200,169,110,.2) !important;color:#e2c99a !important;}
-.btn-save{background:rgba(34,197,94,.08) !important;border-color:rgba(34,197,94,.3) !important;color:#22c55e !important;}
-.btn-save:hover{background:rgba(34,197,94,.16) !important;}
-.btn-del{background:rgba(244,63,94,.07) !important;border-color:rgba(244,63,94,.24) !important;color:#f43f5e !important;}
-.btn-del:hover{background:rgba(244,63,94,.16) !important;}
-
-@keyframes flash{0%,100%{opacity:1}50%{opacity:.45}}
-.flash{animation:flash .4s ease}
-
-/* ── DRAG & DROP ── */
-.drag-handle{
-display:inline-flex;align-items:center;justify-content:center;
-width:22px;height:32px;cursor:grab;color:#6b7691 !important;
-font-size:16px;opacity:.5;transition:opacity .15s;
-touch-action:none; /* essential for iOS touch drag */
-user-select:none;-webkit-user-select:none;
-}
-.drag-handle:hover{opacity:1;color:#c8a96e !important}
-.drag-handle:active{cursor:grabbing}
-tr.dragging{
-opacity:.4;
-background:rgba(200,169,110,.12) !important;
-}
-tr.drag-over{
-border-top:2px solid #c8a96e !important;
-background:rgba(200,169,110,.08) !important;
-}
-
-/* ── CHART CONTROLS ── */
-.chart-ctrl{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}
-.cg-wrap{display:flex;flex-direction:column;gap:5px}
-.cg-lbl{font-size:10px;letter-spacing:2px;color:#6b7691 !important;text-transform:uppercase}
-.tog-row{display:flex;gap:6px}
-.tog{
-background:#191e30 !important;border:1px solid rgba(200,169,110,.16) !important;color:#6b7691 !important;
-padding:9px 17px !important;border-radius:7px !important;cursor:pointer !important;
-font-family:var(–font-sans) !important;font-size:14px !important;transition:all .18s !important;
-outline:none !important;text-decoration:none !important;
-}
-.tog.active{background:rgba(200,169,110,.10) !important;border-color:#c8a96e !important;color:#c8a96e !important;font-weight:600 !important;}
-.tog:hover:not(.active){color:#e2c99a !important;}
-.date-inp{
-background:#191e30 !important;border:1px solid rgba(200,169,110,.16) !important;color:#e6e1d8 !important;
-padding:9px 12px !important;border-radius:7px !important;font-family:var(–font-sans) !important;
-font-size:14px !important;outline:none !important;width:150px !important;
-}
-.date-inp:focus{border-color:#c8a96e !important;}
-.clr-btn{
-background:transparent !important;border:1px solid rgba(200,169,110,.16) !important;color:#6b7691 !important;
-padding:9px 14px !important;border-radius:7px !important;cursor:pointer !important;
-font-size:13px !important;font-family:var(–font-sans) !important;
-outline:none !important;text-decoration:none !important;
-}
-.clr-btn:hover{border-color:#c8a96e !important;color:#c8a96e !important;}
-.filter-banner{
-background:rgba(200,169,110,.06);border:1px solid var(–gold-bd);
-border-radius:8px;padding:9px 16px;font-size:13px;color:#c8a96e !important;
-margin-bottom:14px;display:none;
-}
-.cw{padding:24px;background:#131726 !important}
-
-/* trade detail sub-table */
-.trade-detail{
-background:#191e30 !important;border-left:3px solid var(–border);
-padding:8px 12px;margin-top:4px;border-radius:0 6px 6px 0;
-}
-.trade-detail table{font-size:13px}
-.trade-detail thead th{
-font-size:9.5px;padding:6px 10px;
-background:transparent;border-bottom:1px solid var(–border2);
-}
-.trade-detail td{padding:7px 10px;border-bottom:1px solid var(–border2)}
-
-/* ── MODAL ── */
-.modal-bg{
-display:none;position:fixed;inset:0;background:rgba(0,0,0,.74);
-z-index:500;align-items:center;justify-content:center;
-backdrop-filter:blur(4px);
-}
-.modal-bg.open{display:flex}
-.modal{
-background:#131726 !important;border:1px solid rgba(200,169,110,.16);border-radius:14px;
-padding:30px;width:min(560px,95vw);box-shadow:0 16px 60px rgba(0,0,0,.6);
-max-height:90vh;overflow-y:auto;
-}
-.modal-title{
-font-family:var(–font-serif);font-size:21px;
-color:#e2c99a !important;margin-bottom:24px;font-weight:700;
-}
-.f-grid{display:flex;flex-direction:column;gap:16px}
-.f-row{display:flex;gap:14px;flex-wrap:wrap}
-.f-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:110px}
-.f-group.full{flex:100%}
-.f-lbl{font-size:10px;letter-spacing:2px;color:#6b7691 !important;text-transform:uppercase}
-.f-inp{
-background:#191e30 !important;border:1px solid rgba(200,169,110,.16);color:#e6e1d8 !important;
-padding:10px 14px;border-radius:8px;font-family:var(–font-sans);
-font-size:15px;outline:none;width:100%;transition:border-color .18s;
-}
-.f-inp:focus{border-color:#c8a96e !important;box-shadow:0 0 0 2px rgba(200,169,110,.12)}
-.f-hint{font-size:11px;color:#6b7691 !important;margin-top:2px}
-.prev-box{
-background:rgba(200,169,110,.06);border:1px solid var(–gold-bd);
-border-radius:8px;padding:12px 16px;font-size:14px;
-color:#e2c99a !important;display:none;line-height:1.9;
-}
-.modal-actions{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
-.ok-btn{
-background:linear-gradient(135deg,#c8a96e 0%,#7a5020 100%) !important;
-color:#0c0f1a !important;border:none !important;padding:12px 30px !important;border-radius:8px !important;
-font-family:var(–font-sans) !important;font-size:15px !important;font-weight:700 !important;
-cursor:pointer !important;text-decoration:none !important;outline:none !important;
-}
-.ok-btn:hover{opacity:.88 !important}
-.no-btn{
-background:#191e30 !important;border:1px solid rgba(200,169,110,.16) !important;color:#6b7691 !important;
-padding:12px 22px !important;border-radius:8px !important;cursor:pointer !important;
-font-size:15px !important;font-family:var(–font-sans) !important;
-text-decoration:none !important;outline:none !important;
-}
-
-/* misc */
-.gold-line{height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,110,.38),transparent);margin:4px 0 20px}
-.tip{font-size:12px;color:#6b7691 !important;padding:10px 22px;border-top:1px solid var(–border2)}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:#0c0f1a !important}
-::-webkit-scrollbar-thumb{background:rgba(200,169,110,.24);border-radius:3px}
-</style>
-
-</head>
-<body>
-<div id="app">
-
-<header>
-  <div class="logo-row">
-    <div class="logo-mark">◈</div>
-    <div>
-      <div class="logo-text">Warrant Ledger</div>
-      <div class="logo-sub">選擇權投資儀表板</div>
-    </div>
-  </div>
-  <div class="hdr-nums" id="hdr">
-    <div class="hnum">
-      <div class="hnum-lbl">已實現損益</div>
-      <div class="hnum-val cp">+45,843</div>
-    </div>
-    <div style="width:1px;height:32px;background:var(--border)"></div>
-    <div class="hnum">
-      <div class="hnum-lbl">持倉預估</div>
-      <div class="hnum-val cp">+34,840</div>
-    </div></div>
-</header>
-
-<nav>
-  <button class="nb" onclick="go('overview')">總覽</button>
-  <button class="nb" onclick="go('open')">持倉明細</button>
-  <button class="nb active" onclick="go('closed')">已實現損益</button>
-  <button class="nb" onclick="go('chart')">圖表分析</button>
-  <button class="nb-export" onclick="exportSnapshot()" title="下載含當前資料的新版本">⬇ 匯出目前版本</button>
-</nav>
-
-<div class="body">
-  <div id="pv-overview" style="display: none;">
-  <div class="sgrid">
-    <div class="scard">
-      <div class="sc-lbl">已實現總損益</div>
-      <div class="sc-val cp">+29,953</div>
-      <div class="sc-sub">26 筆交易</div>
-      <div class="sc-bar"><div class="sc-bar-fill" style="width:100%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">持倉預估損益</div>
-      <div class="sc-val cp">+34,840</div>
-      <div class="sc-sub">15 個部位（不含股票）</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">合計估算損益</div>
-      <div class="sc-val cp">+64,793</div>
-      <div class="sc-sub">已實現 + 持倉估算</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">勝率</div>
-      <div class="sc-val cp">80.8%</div>
-      <div class="sc-sub">21 勝 · 5 敗</div>
-      <div class="sc-bar"><div class="sc-bar-fill" style="width:80.8%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">平均獲利率</div>
-      <div class="sc-val cp">55.5%</div>
-      <div class="sc-sub">已實現交易平均</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">最佳單筆</div>
-      <div class="sc-val cp">+3,672</div>
-      <div class="sc-sub" style="font-size:11px;word-break:break-all">啟碁元大5C購01</div>
-    </div>
-  </div>
-  <div class="gold-line"></div>
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">持倉排行</span>
-      <span class="sec-sub">依預估損益由高到低 · 隨現價自動更新</span>
-    </div>
-    <div class="tw"><table>
-      <thead><tr><th>商品</th><th>持股數</th><th>現價</th><th>成本均價</th><th>預估損益</th><th>預估獲利率</th></tr></thead>
-      <tbody><tr>
-        <td class="td-name">聯發科元大61購16</td>
-        <td>12,000</td>
-        <td class="cp" style="font-weight:700">1.63</td>
-        <td class="cm">0.79</td>
-        <td><span class="bdg bdg-p">+10,080</span></td>
-        <td class="cp" style="font-weight:700">+106.33%</td>
-      </tr><tr>
-        <td class="td-name">台積電元大58購01</td>
-        <td>12,000</td>
-        <td class="cp" style="font-weight:700">1.26</td>
-        <td class="cm">0.61</td>
-        <td><span class="bdg bdg-p">+7,800</span></td>
-        <td class="cp" style="font-weight:700">+106.56%</td>
-      </tr><tr>
-        <td class="td-name">聯發科元大61購11</td>
-        <td>13,000</td>
-        <td class="cp" style="font-weight:700">1.39</td>
-        <td class="cm">0.83</td>
-        <td><span class="bdg bdg-p">+7,280</span></td>
-        <td class="cp" style="font-weight:700">+67.47%</td>
-      </tr><tr>
-        <td class="td-name">聯發科統一62購01</td>
-        <td>12,000</td>
-        <td class="cp" style="font-weight:700">1.19</td>
-        <td class="cm">0.65</td>
-        <td><span class="bdg bdg-p">+6,480</span></td>
-        <td class="cp" style="font-weight:700">+83.08%</td>
-      </tr><tr>
-        <td class="td-name">聯發科元大5A購05</td>
-        <td>5,000</td>
-        <td class="cp" style="font-weight:700">1.57</td>
-        <td class="cm">0.31</td>
-        <td><span class="bdg bdg-p">+6,300</span></td>
-        <td class="cp" style="font-weight:700">+406.45%</td>
-      </tr><tr>
-        <td class="td-name">聯發科元大61購18</td>
-        <td>5,000</td>
-        <td class="cp" style="font-weight:700">1.41</td>
-        <td class="cm">0.73</td>
-        <td><span class="bdg bdg-p">+3,400</span></td>
-        <td class="cp" style="font-weight:700">+93.15%</td>
-      </tr><tr>
-        <td class="td-name">聯發科中信63購01</td>
-        <td>8,000</td>
-        <td class="cp" style="font-weight:700">1.02</td>
-        <td class="cm">0.82</td>
-        <td><span class="bdg bdg-p">+1,600</span></td>
-        <td class="cp" style="font-weight:700">+24.39%</td>
-      </tr><tr>
-        <td class="td-name">臺指2X中信63購03</td>
-        <td>6,000</td>
-        <td class="cp" style="font-weight:700">0.7</td>
-        <td class="cm">0.55</td>
-        <td><span class="bdg bdg-p">+900</span></td>
-        <td class="cp" style="font-weight:700">+27.27%</td>
-      </tr><tr>
-        <td class="td-name">鴻海統一68購03</td>
-        <td>10,000</td>
-        <td class="cl" style="font-weight:700">0.36</td>
-        <td class="cm">0.37</td>
-        <td><span class="bdg bdg-l">-100</span></td>
-        <td class="cl" style="font-weight:700">-2.70%</td>
-      </tr><tr>
-        <td class="td-name">強茂統一71購01</td>
-        <td>2,000</td>
-        <td class="cl" style="font-weight:700">0.73</td>
-        <td class="cm">0.9</td>
-        <td><span class="bdg bdg-l">-340</span></td>
-        <td class="cl" style="font-weight:700">-18.89%</td>
-      </tr><tr>
-        <td class="td-name">力成元大57購12</td>
-        <td>5,000</td>
-        <td class="cl" style="font-weight:700">0.49</td>
-        <td class="cm">0.62</td>
-        <td><span class="bdg bdg-l">-650</span></td>
-        <td class="cl" style="font-weight:700">-20.97%</td>
-      </tr><tr>
-        <td class="td-name">強茂統一5C購01</td>
-        <td>6,000</td>
-        <td class="cl" style="font-weight:700">0.51</td>
-        <td class="cm">0.77</td>
-        <td><span class="bdg bdg-l">-1,560</span></td>
-        <td class="cl" style="font-weight:700">-33.77%</td>
-      </tr><tr>
-        <td class="td-name">惠特統一61購01</td>
-        <td>5,000</td>
-        <td class="cl" style="font-weight:700">0.49</td>
-        <td class="cm">0.85</td>
-        <td><span class="bdg bdg-l">-1,800</span></td>
-        <td class="cl" style="font-weight:700">-42.35%</td>
-      </tr><tr>
-        <td class="td-name">強茂永豐57購03</td>
-        <td>13,000</td>
-        <td class="cl" style="font-weight:700">0.41</td>
-        <td class="cm">0.76</td>
-        <td><span class="bdg bdg-l">-4,550</span></td>
-        <td class="cl" style="font-weight:700">-46.05%</td>
-      </tr></tbody>
-    </table></div>
-  </div></div>
-  <div id="pv-open" style="display: none;">
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">未平倉部位明細</span>
-      <button class="sec-btn" onclick="openAddOpen()">＋ 新增部位</button>
-    </div>
-    <div class="tw"><table>
-      <thead><tr>
-        <th style="width:32px"></th>
-        <th>商品</th><th>持股數</th><th>現價</th><th>成本均價</th>
-        <th>市值</th><th>持有成本</th><th>預估損益</th><th>預估獲利率</th><th>損益平衡</th><th>操作</th>
-      </tr></thead>
-      <tbody id="open-body">
-    <tr data-id="1" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,1)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,1)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">鴻海統一68購03</td>
-      <td>10,000</td>
-      <td class="cl" style="font-weight:700">0.36</td>
-      <td class="cm">0.37</td>
-      <td class="cm">3,600</td>
-      <td class="cm">3,700</td>
-      <td><span class="bdg bdg-l">-100</span></td>
-      <td class="cl" style="font-weight:700">-2.70%</td>
-      <td class="cm">0.370</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(1)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(1)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="2" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,2)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,2)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">強茂統一5C購01</td>
-      <td>6,000</td>
-      <td class="cl" style="font-weight:700">0.51</td>
-      <td class="cm">0.77</td>
-      <td class="cm">3,060</td>
-      <td class="cm">4,620</td>
-      <td><span class="bdg bdg-l">-1,560</span></td>
-      <td class="cl" style="font-weight:700">-33.77%</td>
-      <td class="cm">0.770</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(2)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(2)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="3" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,3)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,3)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">強茂統一71購01</td>
-      <td>2,000</td>
-      <td class="cl" style="font-weight:700">0.73</td>
-      <td class="cm">0.9</td>
-      <td class="cm">1,460</td>
-      <td class="cm">1,800</td>
-      <td><span class="bdg bdg-l">-340</span></td>
-      <td class="cl" style="font-weight:700">-18.89%</td>
-      <td class="cm">0.900</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(3)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(3)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="4" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,4)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,4)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">惠特統一61購01</td>
-      <td>5,000</td>
-      <td class="cl" style="font-weight:700">0.49</td>
-      <td class="cm">0.85</td>
-      <td class="cm">2,450</td>
-      <td class="cm">4,250</td>
-      <td><span class="bdg bdg-l">-1,800</span></td>
-      <td class="cl" style="font-weight:700">-42.35%</td>
-      <td class="cm">0.850</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(4)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(4)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="5" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,5)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,5)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">力成元大57購12</td>
-      <td>5,000</td>
-      <td class="cl" style="font-weight:700">0.49</td>
-      <td class="cm">0.62</td>
-      <td class="cm">2,450</td>
-      <td class="cm">3,100</td>
-      <td><span class="bdg bdg-l">-650</span></td>
-      <td class="cl" style="font-weight:700">-20.97%</td>
-      <td class="cm">0.620</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(5)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(5)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="6" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,6)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,6)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">強茂永豐57購03</td>
-      <td>13,000</td>
-      <td class="cl" style="font-weight:700">0.41</td>
-      <td class="cm">0.76</td>
-      <td class="cm">5,330</td>
-      <td class="cm">9,880</td>
-      <td><span class="bdg bdg-l">-4,550</span></td>
-      <td class="cl" style="font-weight:700">-46.05%</td>
-      <td class="cm">0.760</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(6)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(6)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="7" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,7)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,7)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科元大5A購05</td>
-      <td>5,000</td>
-      <td class="cp" style="font-weight:700">1.57</td>
-      <td class="cm">0.31</td>
-      <td class="cm">7,850</td>
-      <td class="cm">1,550</td>
-      <td><span class="bdg bdg-p">+6,300</span></td>
-      <td class="cp" style="font-weight:700">+406.45%</td>
-      <td class="cm">0.310</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(7)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(7)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="8" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,8)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,8)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">台積電元大58購01</td>
-      <td>12,000</td>
-      <td class="cp" style="font-weight:700">1.26</td>
-      <td class="cm">0.61</td>
-      <td class="cm">15,120</td>
-      <td class="cm">7,320</td>
-      <td><span class="bdg bdg-p">+7,800</span></td>
-      <td class="cp" style="font-weight:700">+106.56%</td>
-      <td class="cm">0.610</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(8)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(8)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="9" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,9)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,9)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科元大61購11</td>
-      <td>13,000</td>
-      <td class="cp" style="font-weight:700">1.39</td>
-      <td class="cm">0.83</td>
-      <td class="cm">18,070</td>
-      <td class="cm">10,790</td>
-      <td><span class="bdg bdg-p">+7,280</span></td>
-      <td class="cp" style="font-weight:700">+67.47%</td>
-      <td class="cm">0.830</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(9)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(9)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="10" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,10)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,10)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科元大61購16</td>
-      <td>12,000</td>
-      <td class="cp" style="font-weight:700">1.63</td>
-      <td class="cm">0.79</td>
-      <td class="cm">19,560</td>
-      <td class="cm">9,480</td>
-      <td><span class="bdg bdg-p">+10,080</span></td>
-      <td class="cp" style="font-weight:700">+106.33%</td>
-      <td class="cm">0.790</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(10)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(10)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="11" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,11)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,11)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科中信63購01</td>
-      <td>8,000</td>
-      <td class="cp" style="font-weight:700">1.02</td>
-      <td class="cm">0.82</td>
-      <td class="cm">8,160</td>
-      <td class="cm">6,560</td>
-      <td><span class="bdg bdg-p">+1,600</span></td>
-      <td class="cp" style="font-weight:700">+24.39%</td>
-      <td class="cm">0.820</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(11)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(11)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="12" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,12)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,12)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科元大61購18</td>
-      <td>5,000</td>
-      <td class="cp" style="font-weight:700">1.41</td>
-      <td class="cm">0.73</td>
-      <td class="cm">7,050</td>
-      <td class="cm">3,650</td>
-      <td><span class="bdg bdg-p">+3,400</span></td>
-      <td class="cp" style="font-weight:700">+93.15%</td>
-      <td class="cm">0.730</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(12)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(12)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="13" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,13)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,13)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">臺指2X中信63購03</td>
-      <td>6,000</td>
-      <td class="cp" style="font-weight:700">0.7</td>
-      <td class="cm">0.55</td>
-      <td class="cm">4,200</td>
-      <td class="cm">3,300</td>
-      <td><span class="bdg bdg-p">+900</span></td>
-      <td class="cp" style="font-weight:700">+27.27%</td>
-      <td class="cm">0.550</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(13)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(13)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="14" style="background:var(--profit-bg)" draggable="true" ondragstart="onDragStart(event,14)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,14)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">聯發科統一62購01</td>
-      <td>12,000</td>
-      <td class="cp" style="font-weight:700">1.19</td>
-      <td class="cm">0.65</td>
-      <td class="cm">14,280</td>
-      <td class="cm">7,800</td>
-      <td><span class="bdg bdg-p">+6,480</span></td>
-      <td class="cp" style="font-weight:700">+83.08%</td>
-      <td class="cm">0.650</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(14)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(14)">刪除</button>
-      </td>
-    </tr>
-    <tr data-id="15" style="background:var(--loss-bg)" draggable="true" ondragstart="onDragStart(event,15)" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,15)" ondragend="onDragEnd(event)">
-      <td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>
-      <td class="td-name">公勝保經</td>
-      <td>1,000</td>
-      <td class="cl" style="font-weight:700">79</td>
-      <td class="cm">88.9</td>
-      <td class="cm">79,000</td>
-      <td class="cm">88,900</td>
-      <td><span class="bdg bdg-l">-9,900</span></td>
-      <td class="cl" style="font-weight:700">-11.14%</td>
-      <td class="cm">88.900</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(15)">編輯</button>
-        <button class="rab btn-del" onclick="delOpen(15)">刪除</button>
-      </td>
-    </tr></tbody>
-    </table></div>
-    <div class="tip">☰ 拖拉左側圖示可調整順序 · 點擊「編輯」修改欄位後按「儲存」確認</div>
-  </div></div>
-  <div id="pv-closed" style="">
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">已實現損益（40 筆）</span>
-      <div style="display:flex;gap:10px;align-items:center">
-        <span style="font-size:14px;color:#22c55e !important;font-weight:700">總計：+45,843</span>
-        <button class="sec-btn" onclick="openAddClosed()">＋ 新增</button>
-      </div>
-    </div>
-    <div class="tw"><table>
-      <thead><tr>
-        <th>日期</th><th>商品全名</th><th>買進均價</th><th>賣出均價</th>
-        <th>股數</th><th>損益</th><th>獲利率%</th><th>操作</th>
-      </tr></thead>
-      <tbody id="closed-body"><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">聯發科中信63購01</td>
-      <td class="cm">0.65</td>
-      <td class="cm">1.15</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+1,500</span></td>
-      <td class="cp" style="font-weight:700">+76.92%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(44)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(44)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">台積電元大61購14</td>
-      <td class="cm">0.65</td>
-      <td class="cm">0.97</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+960</span></td>
-      <td class="cp" style="font-weight:700">+49.23%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(43)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(43)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">聯發科統一62購01</td>
-      <td class="cm">0.65</td>
-      <td class="cm">1.38</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+2,920</span></td>
-      <td class="cp" style="font-weight:700">+112.31%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(42)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(42)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">聯發科元大61購11</td>
-      <td class="cm">0.65</td>
-      <td class="cm">1.76</td>
-      <td class="cm">2,000</td>
-      <td><span class="bdg bdg-p">+2,220</span></td>
-      <td class="cp" style="font-weight:700">+170.77%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(41)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(41)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">聯發科元大61購16</td>
-      <td class="cm">0.65</td>
-      <td class="cm">1.97</td>
-      <td class="cm">7,000</td>
-      <td><span class="bdg bdg-p">+9,240</span></td>
-      <td class="cp" style="font-weight:700">+203.08%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(40)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(40)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/29</td>
-      <td class="td-name">惠特統一61購01</td>
-      <td class="cm">0.85</td>
-      <td class="cm">0.84</td>
-      <td class="cm">2,000</td>
-      <td><span class="bdg bdg-l">-20</span></td>
-      <td class="cl" style="font-weight:700">-1.18%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(39)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(39)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/28</td>
-      <td class="td-name">聯發科統一62購01</td>
-      <td class="cm">0.67</td>
-      <td class="cm">1.48</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-p">+4,050</span></td>
-      <td class="cp" style="font-weight:700">+120.90%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(38)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(38)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/28</td>
-      <td class="td-name">臺指2X中信63購03</td>
-      <td class="cm">0.5</td>
-      <td class="cm">0.77</td>
-      <td class="cm">6,000</td>
-      <td><span class="bdg bdg-p">+1,620</span></td>
-      <td class="cp" style="font-weight:700">+54.00%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(37)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(37)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">力成元大57購12</td>
-      <td class="cm">0.65</td>
-      <td class="cm">0.63</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-l">-100</span></td>
-      <td class="cl" style="font-weight:700">-3.08%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(36)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(36)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">強茂永豐57購03</td>
-      <td class="cm">0.65</td>
-      <td class="cm">0.43</td>
-      <td class="cm">9,000</td>
-      <td><span class="bdg bdg-l">-1,980</span></td>
-      <td class="cl" style="font-weight:700">-33.85%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(35)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(35)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">強茂統一71購01</td>
-      <td class="cm">0.9</td>
-      <td class="cm">0.73</td>
-      <td class="cm">2,000</td>
-      <td><span class="bdg bdg-l">-340</span></td>
-      <td class="cl" style="font-weight:700">-18.89%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(34)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(34)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">強茂統一5C購01</td>
-      <td class="cm">0.77</td>
-      <td class="cm">0.52</td>
-      <td class="cm">6,000</td>
-      <td><span class="bdg bdg-l">-1,500</span></td>
-      <td class="cl" style="font-weight:700">-32.47%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(33)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(33)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">強茂永豐57購03</td>
-      <td class="cm">0.76</td>
-      <td class="cm">0.39</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-l">-1,480</span></td>
-      <td class="cl" style="font-weight:700">-48.68%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(32)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(32)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/27</td>
-      <td class="td-name">惠特統一61購01</td>
-      <td class="cm">0.85</td>
-      <td class="cm">0.45</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-l">-1,200</span></td>
-      <td class="cl" style="font-weight:700">-47.06%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(31)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(31)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/22</td>
-      <td class="td-name">惠特統一61購03</td>
-      <td class="cm">0.58</td>
-      <td class="cm">0.49</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-l">-442</span></td>
-      <td class="cl" style="font-weight:700">-15.40%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(26)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(26)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/22</td>
-      <td class="td-name">強茂永豐57購03</td>
-      <td class="cm">0.92</td>
-      <td class="cm">0.52</td>
-      <td class="cm">7,000</td>
-      <td><span class="bdg bdg-l">-2,837</span></td>
-      <td class="cl" style="font-weight:700">-43.96%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(25)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(25)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/22</td>
-      <td class="td-name">富喬統一61購04</td>
-      <td class="cm">0.76</td>
-      <td class="cm">0.73</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-l">-122</span></td>
-      <td class="cl" style="font-weight:700">-4.04%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(24)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(24)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/22</td>
-      <td class="td-name">精材元大61購04</td>
-      <td class="cm">0.52</td>
-      <td class="cm">0.64</td>
-      <td class="cm">6,000</td>
-      <td><span class="bdg bdg-p">+677</span></td>
-      <td class="cp" style="font-weight:700">+21.56%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(23)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(23)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/21</td>
-      <td class="td-name">富喬統一62購02</td>
-      <td class="cm">0.91</td>
-      <td class="cm">0.96</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+197</span></td>
-      <td class="cp" style="font-weight:700">+5.44%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(22)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(22)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/21</td>
-      <td class="td-name">台虹統一6C購01</td>
-      <td class="cm">0.84</td>
-      <td class="cm">0.91</td>
-      <td class="cm">6,000</td>
-      <td><span class="bdg bdg-p">+435</span></td>
-      <td class="cp" style="font-weight:700">+8.70%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(21)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(21)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/21</td>
-      <td class="td-name">順達統一61購01</td>
-      <td class="cm">0.82</td>
-      <td class="cm">0.81</td>
-      <td class="cm">7,000</td>
-      <td><span class="bdg bdg-l">-65</span></td>
-      <td class="cl" style="font-weight:700">-1.14%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(20)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(20)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/17</td>
-      <td class="td-name">國巨統一6B購03</td>
-      <td class="cm">0.91</td>
-      <td class="cm">0.97</td>
-      <td class="cm">6,000</td>
-      <td><span class="bdg bdg-p">+315</span></td>
-      <td class="cp" style="font-weight:700">+5.75%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(19)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(19)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/17</td>
-      <td class="td-name">聯發科元大61購13</td>
-      <td class="cm">0.45</td>
-      <td class="cm">0.89</td>
-      <td class="cm">7,000</td>
-      <td><span class="bdg bdg-p">+3,045</span></td>
-      <td class="cp" style="font-weight:700">+96.06%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(18)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(18)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/17</td>
-      <td class="td-name">聯發科元大61購16</td>
-      <td class="cm">0.35</td>
-      <td class="cm">0.7</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+1,366</span></td>
-      <td class="cp" style="font-weight:700">+96.74%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(17)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(17)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/17</td>
-      <td class="td-name">聯發科元大61購18</td>
-      <td class="cm">0.4</td>
-      <td class="cm">0.73</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-p">+1,617</span></td>
-      <td class="cp" style="font-weight:700">+80.45%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(16)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(16)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/16</td>
-      <td class="td-name">聯發科元大5A購05</td>
-      <td class="cm">0.31</td>
-      <td class="cm">0.63</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+1,249</span></td>
-      <td class="cp" style="font-weight:700">+100.00%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(15)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(15)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/16</td>
-      <td class="td-name">聯發科元大61購15</td>
-      <td class="cm">0.53</td>
-      <td class="cm">1.01</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-p">+2,355</span></td>
-      <td class="cp" style="font-weight:700">+88.20%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(14)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(14)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/16</td>
-      <td class="td-name">聯發科元大61購16</td>
-      <td class="cm">0.41</td>
-      <td class="cm">0.68</td>
-      <td class="cm">13,000</td>
-      <td><span class="bdg bdg-p">+3,502</span></td>
-      <td class="cp" style="font-weight:700">+65.95%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(13)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(13)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/15</td>
-      <td class="td-name">啟碁元大61購06</td>
-      <td class="cm">0.59</td>
-      <td class="cm">1.2</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-p">+2,999</span></td>
-      <td class="cp" style="font-weight:700">+100.81%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(12)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(12)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/15</td>
-      <td class="td-name">啟碁富邦5C購01</td>
-      <td class="cm">0.41</td>
-      <td class="cm">1.04</td>
-      <td class="cm">2,000</td>
-      <td><span class="bdg bdg-p">+1,228</span></td>
-      <td class="cp" style="font-weight:700">+147.95%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(11)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(11)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/13</td>
-      <td class="td-name">強茂元大55購02</td>
-      <td class="cm">0.55</td>
-      <td class="cm">0.94</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+1,158</span></td>
-      <td class="cp" style="font-weight:700">+70.61%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(10)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(10)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/13</td>
-      <td class="td-name">強茂永豐57購03</td>
-      <td class="cm">0.32</td>
-      <td class="cm">0.47</td>
-      <td class="cm">10,000</td>
-      <td><span class="bdg bdg-p">+1,456</span></td>
-      <td class="cp" style="font-weight:700">+45.22%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(9)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(9)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/13</td>
-      <td class="td-name">啟碁元大61購03</td>
-      <td class="cm">0.53</td>
-      <td class="cm">1.2</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+1,997</span></td>
-      <td class="cp" style="font-weight:700">+126.39%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(8)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(8)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/13</td>
-      <td class="td-name">啟碁元大61購04</td>
-      <td class="cm">0.72</td>
-      <td class="cm">1.55</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+2,476</span></td>
-      <td class="cp" style="font-weight:700">+115.16%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(7)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(7)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/13</td>
-      <td class="td-name">啟碁元大61購06</td>
-      <td class="cm">0.6</td>
-      <td class="cm">1.3</td>
-      <td class="cm">3,000</td>
-      <td><span class="bdg bdg-p">+2,092</span></td>
-      <td class="cp" style="font-weight:700">+117.20%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(6)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(6)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/10</td>
-      <td class="td-name">力成元大57購05</td>
-      <td class="cm">0.6</td>
-      <td class="cm">0.68</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+318</span></td>
-      <td class="cp" style="font-weight:700">+13.36%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(5)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(5)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/10</td>
-      <td class="td-name">啟碁富邦5C購01</td>
-      <td class="cm">0.41</td>
-      <td class="cm">0.87</td>
-      <td class="cm">2,000</td>
-      <td><span class="bdg bdg-p">+889</span></td>
-      <td class="cp" style="font-weight:700">+107.11%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(4)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(4)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--loss-bg)">
-      <td class="td-date">2026/04/10</td>
-      <td class="td-name">聯發科元大61購18</td>
-      <td class="cm">0.52</td>
-      <td class="cm">0.45</td>
-      <td class="cm">5,000</td>
-      <td><span class="bdg bdg-l">-342</span></td>
-      <td class="cl" style="font-weight:700">-13.31%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(3)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(3)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/09</td>
-      <td class="td-name">啟碁元大5C購01</td>
-      <td class="cm">0.62</td>
-      <td class="cm">1.08</td>
-      <td class="cm">8,000</td>
-      <td><span class="bdg bdg-p">+3,672</span></td>
-      <td class="cp" style="font-weight:700">+74.33%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(2)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(2)">刪除</button>
-      </td>
-    </tr><tr style="background:var(--profit-bg)">
-      <td class="td-date">2026/04/08</td>
-      <td class="td-name">勤誠兆豐59購01</td>
-      <td class="cm">0.53</td>
-      <td class="cm">0.71</td>
-      <td class="cm">4,000</td>
-      <td><span class="bdg bdg-p">+718</span></td>
-      <td class="cp" style="font-weight:700">+34.19%</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(1)">編輯</button>
-        <button class="rab btn-del" onclick="delClosed(1)">刪除</button>
-      </td>
-    </tr></tbody>
-    </table></div>
-    <div class="tip">損益 = (賣出 − 買進) × 股數，獲利率自動計算</div>
-  </div></div>
-  <div id="pv-chart" style="display:none"></div>
-</div>
-
-<!-- Modal -->
-
-<div class="modal-bg" id="modal">
-  <div class="modal">
-    <div class="modal-title" id="modal-title">新增已實現損益</div>
-    <div class="f-grid" id="modal-body">
-  <div class="f-grid">
-    <div class="f-row">
-      <div class="f-group" style="min-width:145px"><label class="f-lbl">賣出日期</label>
-        <input class="f-inp" id="m-date" type="date"></div>
-      <div class="f-group full"><label class="f-lbl">商品全名</label>
-        <input class="f-inp" id="m-product" placeholder="例：聯發科元大61購11"></div>
-    </div>
-    <div class="f-row">
-      <div class="f-group"><label class="f-lbl">買進均價</label>
-        <input class="f-inp" id="m-buyp" type="number" step="0.01" placeholder="0.65" oninput="mPrevClosed()">
-        <span class="f-hint">當初買入的平均價格</span></div>
-      <div class="f-group"><label class="f-lbl">賣出均價</label>
-        <input class="f-inp" id="m-sellp" type="number" step="0.01" placeholder="1.20" oninput="mPrevClosed()">
-        <span class="f-hint">實際賣出的平均價格</span></div>
-      <div class="f-group"><label class="f-lbl">賣出股數</label>
-        <input class="f-inp" id="m-shares" type="number" placeholder="4000" oninput="mPrevClosed()">
-        <span class="f-hint">張數 × 1000</span></div>
-    </div>
-    <div class="prev-box" id="m-prev" style="display: block;">買入成本：<strong>1,950</strong> &nbsp;|&nbsp; 賣出金額：<strong>3,450</strong><br>
-      損益：<strong style="color:#22c55e">+1,500</strong>
-      &nbsp;&nbsp; 獲利率：<strong style="color:#22c55e">+76.92%</strong></div>
-    <p style="font-size:12px;color:#6b7691 !important;line-height:1.8">
-      📌 損益 = (賣出 − 買進) × 股數 · 獲利率自動計算，不需手填
-    </p>
-  </div></div>
-    <div class="modal-actions">
-      <button class="ok-btn" id="modal-ok">確認新增</button>
-      <button class="no-btn" onclick="closeModal()">取消</button>
-    </div>
-  </div>
-</div>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多保單整合智能試算｜陳志強</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script>
-// ═══════════ DATA ═══════════════════════════════════════════
-let openPos = [
-  {
-    "id": 1,
-    "product": "鴻海統一68購03",
-    "shares": 10000,
-    "price": 0.36,
-    "cost": 0.37
-  },
-  {
-    "id": 2,
-    "product": "強茂統一5C購01",
-    "shares": 6000,
-    "price": 0.51,
-    "cost": 0.77
-  },
-  {
-    "id": 3,
-    "product": "強茂統一71購01",
-    "shares": 2000,
-    "price": 0.73,
-    "cost": 0.9
-  },
-  {
-    "id": 4,
-    "product": "惠特統一61購01",
-    "shares": 5000,
-    "price": 0.49,
-    "cost": 0.85
-  },
-  {
-    "id": 5,
-    "product": "力成元大57購12",
-    "shares": 5000,
-    "price": 0.49,
-    "cost": 0.62
-  },
-  {
-    "id": 6,
-    "product": "強茂永豐57購03",
-    "shares": 13000,
-    "price": 0.41,
-    "cost": 0.76
-  },
-  {
-    "id": 7,
-    "product": "聯發科元大5A購05",
-    "shares": 5000,
-    "price": 1.57,
-    "cost": 0.31
-  },
-  {
-    "id": 8,
-    "product": "台積電元大58購01",
-    "shares": 12000,
-    "price": 1.26,
-    "cost": 0.61
-  },
-  {
-    "id": 9,
-    "product": "聯發科元大61購11",
-    "shares": 13000,
-    "price": 1.39,
-    "cost": 0.83
-  },
-  {
-    "id": 10,
-    "product": "聯發科元大61購16",
-    "shares": 12000,
-    "price": 1.63,
-    "cost": 0.79
-  },
-  {
-    "id": 11,
-    "product": "聯發科中信63購01",
-    "shares": 8000,
-    "price": 1.02,
-    "cost": 0.82
-  },
-  {
-    "id": 12,
-    "product": "聯發科元大61購18",
-    "shares": 5000,
-    "price": 1.41,
-    "cost": 0.73
-  },
-  {
-    "id": 13,
-    "product": "臺指2X中信63購03",
-    "shares": 6000,
-    "price": 0.7,
-    "cost": 0.55
-  },
-  {
-    "id": 14,
-    "product": "聯發科統一62購01",
-    "shares": 12000,
-    "price": 1.19,
-    "cost": 0.65
-  },
-  {
-    "id": 15,
-    "product": "公勝保經",
-    "shares": 1000,
-    "price": 79,
-    "cost": 88.9
+// ══════════════════════════════════════════════════════════
+// MiniChart v2 — 純 Canvas，零依賴，GitHub Pages 相容
+// ══════════════════════════════════════════════════════════
+(function(global){
+  var instances = [];
+
+function MiniChart(canvas, config){
+this.canvas = canvas;
+this.config = config;
+this._retries = 0;
+var self = this;
+// 用 rAF 確保 layout 完成再畫
+requestAnimationFrame(function(){ self._safeDraw(); });
+// window resize 重繪
+this._onResize = function(){ requestAnimationFrame(function(){ self._safeDraw(); }); };
+window.addEventListener(‘resize’, this._onResize);
+instances.push(this);
+}
+
+MiniChart.prototype.destroy = function(){
+window.removeEventListener(‘resize’, this._onResize);
+var idx = instances.indexOf(this);
+if(idx >= 0) instances.splice(idx, 1);
+var ctx = this.canvas.getContext(‘2d’);
+ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+};
+
+MiniChart.prototype._safeDraw = function(){
+var self = this;
+var parent = this.canvas.parentElement;
+if(!parent){ return; }
+// 多種方式取得寬度
+var W = parent.getBoundingClientRect().width
+|| parent.offsetWidth
+|| parent.clientWidth;
+if(W < 50 && this._retries < 10){
+this._retries++;
+setTimeout(function(){ requestAnimationFrame(function(){ self._safeDraw(); }); }, 100 * this._retries);
+return;
+}
+if(W < 50) W = 300; // 最終回退值
+this._draw(W);
+};
+
+MiniChart.prototype._draw = function(W){
+var cfg = this.config;
+var canvas = this.canvas;
+var dpr = Math.min(window.devicePixelRatio || 1, 2);
+var H = 200;
+
+```
+canvas.style.width  = W + 'px';
+canvas.style.height = H + 'px';
+canvas.width  = Math.round(W * dpr);
+canvas.height = Math.round(H * dpr);
+
+var ctx = canvas.getContext('2d');
+ctx.scale(dpr, dpr);
+ctx.clearRect(0, 0, W, H);
+
+var PAD = {top:14, right:12, bottom:34, left:56};
+var gW = W - PAD.left - PAD.right;
+var gH = H - PAD.top  - PAD.bottom;
+var labels   = cfg.data.labels   || [];
+var datasets = cfg.data.datasets || [];
+var type     = cfg.type || 'line';
+var n        = labels.length;
+
+// ── Y range ──
+var yMin = Infinity, yMax = -Infinity;
+if(type === 'bar'){
+  for(var i=0;i<n;i++){
+    var sum=0;
+    datasets.forEach(function(ds){ if(ds.type!=='line') sum+=(ds.data[i]||0); });
+    yMax = Math.max(yMax, sum);
+    datasets.forEach(function(ds){ if(ds.type==='line'){ yMax=Math.max(yMax,ds.data[i]||0); yMin=Math.min(yMin,ds.data[i]||0); } });
   }
-];
+  yMin = Math.min(yMin, 0);
+} else {
+  datasets.forEach(function(ds){
+    (ds.data||[]).forEach(function(v){ if(v!=null){ yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); } });
+  });
+}
+if(!isFinite(yMin)||!isFinite(yMax)){ yMin=0; yMax=1; }
+if(yMax === yMin) yMax = yMin + 1;
 
-let closedTrades = [
-  {
-    "id": 1,
-    "date": "2026/04/08",
-    "name": "勤誠兆豐59購01",
-    "buyP": 0.53,
-    "sellP": 0.71,
-    "shares": 4000,
-    "profit": 718,
-    "roi": 34.19
-  },
-  {
-    "id": 2,
-    "date": "2026/04/09",
-    "name": "啟碁元大5C購01",
-    "buyP": 0.62,
-    "sellP": 1.08,
-    "shares": 8000,
-    "profit": 3672,
-    "roi": 74.33
-  },
-  {
-    "id": 3,
-    "date": "2026/04/10",
-    "name": "聯發科元大61購18",
-    "buyP": 0.52,
-    "sellP": 0.45,
-    "shares": 5000,
-    "profit": -342,
-    "roi": -13.31
-  },
-  {
-    "id": 4,
-    "date": "2026/04/10",
-    "name": "啟碁富邦5C購01",
-    "buyP": 0.41,
-    "sellP": 0.87,
-    "shares": 2000,
-    "profit": 889,
-    "roi": 107.11
-  },
-  {
-    "id": 5,
-    "date": "2026/04/10",
-    "name": "力成元大57購05",
-    "buyP": 0.6,
-    "sellP": 0.68,
-    "shares": 4000,
-    "profit": 318,
-    "roi": 13.36
-  },
-  {
-    "id": 6,
-    "date": "2026/04/13",
-    "name": "啟碁元大61購06",
-    "buyP": 0.6,
-    "sellP": 1.3,
-    "shares": 3000,
-    "profit": 2092,
-    "roi": 117.2
-  },
-  {
-    "id": 7,
-    "date": "2026/04/13",
-    "name": "啟碁元大61購04",
-    "buyP": 0.72,
-    "sellP": 1.55,
-    "shares": 3000,
-    "profit": 2476,
-    "roi": 115.16
-  },
-  {
-    "id": 8,
-    "date": "2026/04/13",
-    "name": "啟碁元大61購03",
-    "buyP": 0.53,
-    "sellP": 1.2,
-    "shares": 3000,
-    "profit": 1997,
-    "roi": 126.39
-  },
-  {
-    "id": 9,
-    "date": "2026/04/13",
-    "name": "強茂永豐57購03",
-    "buyP": 0.32,
-    "sellP": 0.47,
-    "shares": 10000,
-    "profit": 1456,
-    "roi": 45.22
-  },
-  {
-    "id": 10,
-    "date": "2026/04/13",
-    "name": "強茂元大55購02",
-    "buyP": 0.55,
-    "sellP": 0.94,
-    "shares": 3000,
-    "profit": 1158,
-    "roi": 70.61
-  },
-  {
-    "id": 11,
-    "date": "2026/04/15",
-    "name": "啟碁富邦5C購01",
-    "buyP": 0.41,
-    "sellP": 1.04,
-    "shares": 2000,
-    "profit": 1228,
-    "roi": 147.95
-  },
-  {
-    "id": 12,
-    "date": "2026/04/15",
-    "name": "啟碁元大61購06",
-    "buyP": 0.59,
-    "sellP": 1.2,
-    "shares": 5000,
-    "profit": 2999,
-    "roi": 100.81
-  },
-  {
-    "id": 13,
-    "date": "2026/04/16",
-    "name": "聯發科元大61購16",
-    "buyP": 0.41,
-    "sellP": 0.68,
-    "shares": 13000,
-    "profit": 3502,
-    "roi": 65.95
-  },
-  {
-    "id": 14,
-    "date": "2026/04/16",
-    "name": "聯發科元大61購15",
-    "buyP": 0.53,
-    "sellP": 1.01,
-    "shares": 5000,
-    "profit": 2355,
-    "roi": 88.2
-  },
-  {
-    "id": 15,
-    "date": "2026/04/16",
-    "name": "聯發科元大5A購05",
-    "buyP": 0.31,
-    "sellP": 0.63,
-    "shares": 4000,
-    "profit": 1249,
-    "roi": 100
-  },
-  {
-    "id": 16,
-    "date": "2026/04/17",
-    "name": "聯發科元大61購18",
-    "buyP": 0.4,
-    "sellP": 0.73,
-    "shares": 5000,
-    "profit": 1617,
-    "roi": 80.45
-  },
-  {
-    "id": 17,
-    "date": "2026/04/17",
-    "name": "聯發科元大61購16",
-    "buyP": 0.35,
-    "sellP": 0.7,
-    "shares": 4000,
-    "profit": 1366,
-    "roi": 96.74
-  },
-  {
-    "id": 18,
-    "date": "2026/04/17",
-    "name": "聯發科元大61購13",
-    "buyP": 0.45,
-    "sellP": 0.89,
-    "shares": 7000,
-    "profit": 3045,
-    "roi": 96.06
-  },
-  {
-    "id": 19,
-    "date": "2026/04/17",
-    "name": "國巨統一6B購03",
-    "buyP": 0.91,
-    "sellP": 0.97,
-    "shares": 6000,
-    "profit": 315,
-    "roi": 5.75
-  },
-  {
-    "id": 20,
-    "date": "2026/04/21",
-    "name": "順達統一61購01",
-    "buyP": 0.82,
-    "sellP": 0.81,
-    "shares": 7000,
-    "profit": -65,
-    "roi": -1.14
-  },
-  {
-    "id": 21,
-    "date": "2026/04/21",
-    "name": "台虹統一6C購01",
-    "buyP": 0.84,
-    "sellP": 0.91,
-    "shares": 6000,
-    "profit": 435,
-    "roi": 8.7
-  },
-  {
-    "id": 22,
-    "date": "2026/04/21",
-    "name": "富喬統一62購02",
-    "buyP": 0.91,
-    "sellP": 0.96,
-    "shares": 4000,
-    "profit": 197,
-    "roi": 5.44
-  },
-  {
-    "id": 23,
-    "date": "2026/04/22",
-    "name": "精材元大61購04",
-    "buyP": 0.52,
-    "sellP": 0.64,
-    "shares": 6000,
-    "profit": 677,
-    "roi": 21.56
-  },
-  {
-    "id": 24,
-    "date": "2026/04/22",
-    "name": "富喬統一61購04",
-    "buyP": 0.76,
-    "sellP": 0.73,
-    "shares": 4000,
-    "profit": -122,
-    "roi": -4.04
-  },
-  {
-    "id": 25,
-    "date": "2026/04/22",
-    "name": "強茂永豐57購03",
-    "buyP": 0.92,
-    "sellP": 0.52,
-    "shares": 7000,
-    "profit": -2837,
-    "roi": -43.96
-  },
-  {
-    "id": 26,
-    "date": "2026/04/22",
-    "name": "惠特統一61購03",
-    "buyP": 0.58,
-    "sellP": 0.49,
-    "shares": 5000,
-    "profit": -442,
-    "roi": -15.4
-  },
-  {
-    "id": 31,
-    "date": "2026/04/27",
-    "name": "惠特統一61購01",
-    "buyP": 0.85,
-    "sellP": 0.45,
-    "shares": 3000,
-    "profit": -1200,
-    "roi": -47.06
-  },
-  {
-    "id": 32,
-    "date": "2026/04/27",
-    "name": "強茂永豐57購03",
-    "buyP": 0.76,
-    "sellP": 0.39,
-    "shares": 4000,
-    "profit": -1480,
-    "roi": -48.68
-  },
-  {
-    "id": 33,
-    "date": "2026/04/27",
-    "name": "強茂統一5C購01",
-    "buyP": 0.77,
-    "sellP": 0.52,
-    "shares": 6000,
-    "profit": -1500,
-    "roi": -32.47
-  },
-  {
-    "id": 34,
-    "date": "2026/04/27",
-    "name": "強茂統一71購01",
-    "buyP": 0.9,
-    "sellP": 0.73,
-    "shares": 2000,
-    "profit": -340,
-    "roi": -18.89
-  },
-  {
-    "id": 35,
-    "date": "2026/04/27",
-    "name": "強茂永豐57購03",
-    "buyP": 0.65,
-    "sellP": 0.43,
-    "shares": 9000,
-    "profit": -1980,
-    "roi": -33.85
-  },
-  {
-    "id": 36,
-    "date": "2026/04/27",
-    "name": "力成元大57購12",
-    "buyP": 0.65,
-    "sellP": 0.63,
-    "shares": 5000,
-    "profit": -100,
-    "roi": -3.08
-  },
-  {
-    "id": 37,
-    "date": "2026/04/28",
-    "name": "臺指2X中信63購03",
-    "buyP": 0.5,
-    "sellP": 0.77,
-    "shares": 6000,
-    "profit": 1620,
-    "roi": 54
-  },
-  {
-    "id": 38,
-    "date": "2026/04/28",
-    "name": "聯發科統一62購01",
-    "buyP": 0.67,
-    "sellP": 1.48,
-    "shares": 5000,
-    "profit": 4050,
-    "roi": 120.9
-  },
-  {
-    "id": 39,
-    "date": "2026/04/29",
-    "name": "惠特統一61購01",
-    "buyP": 0.85,
-    "sellP": 0.84,
-    "shares": 2000,
-    "profit": -20,
-    "roi": -1.18
-  },
-  {
-    "id": 40,
-    "date": "2026/04/29",
-    "name": "聯發科元大61購16",
-    "buyP": 0.65,
-    "sellP": 1.97,
-    "shares": 7000,
-    "profit": 9240,
-    "roi": 203.08
-  },
-  {
-    "id": 41,
-    "date": "2026/04/29",
-    "name": "聯發科元大61購11",
-    "buyP": 0.65,
-    "sellP": 1.76,
-    "shares": 2000,
-    "profit": 2220,
-    "roi": 170.77
-  },
-  {
-    "id": 42,
-    "date": "2026/04/29",
-    "name": "聯發科統一62購01",
-    "buyP": 0.65,
-    "sellP": 1.38,
-    "shares": 4000,
-    "profit": 2920,
-    "roi": 112.31
-  },
-  {
-    "id": 43,
-    "date": "2026/04/29",
-    "name": "台積電元大61購14",
-    "buyP": 0.65,
-    "sellP": 0.97,
-    "shares": 3000,
-    "profit": 960,
-    "roi": 49.23
-  },
-  {
-    "id": 44,
-    "date": "2026/04/29",
-    "name": "聯發科中信63購01",
-    "buyP": 0.65,
-    "sellP": 1.15,
-    "shares": 3000,
-    "profit": 1500,
-    "roi": 76.92
-  }
-];
+// Nice ticks
+var rawRange = yMax - yMin;
+var mag = Math.pow(10, Math.floor(Math.log10(rawRange)));
+var step = Math.ceil(rawRange / mag / 5) * mag;
+yMax = Math.ceil(yMax / step) * step;
+yMin = Math.floor(yMin / step) * step;
+if(yMax === yMin){ yMax = yMin + step; }
 
-let nextOpenId=21, nextCloseId=30;
+function sy(v){ return PAD.top + gH - (v - yMin) / (yMax - yMin) * gH; }
+function sx(i){ return PAD.left + (i + 0.5) / n * gW; }
 
-// ═══════════ COMPUTED ═══════════════════════════════════════
-const holdCost = p => +(p.cost  * p.shares).toFixed(0);
-const mv       = p => +(p.price * p.shares).toFixed(0);
-const ep       = p => mv(p) - holdCost(p);
-const eroi     = p => holdCost(p) ? +((ep(p)/holdCost(p))*100).toFixed(2) : 0;
-
-const totalClosed  = ()=> closedTrades.reduce((s,t)=>s+t.profit,0);
-const totalOpenEst = ()=> openPos.filter(p=>p.product!=='公勝保經').reduce((s,p)=>s+ep(p),0);
-const wins     = ()=> closedTrades.filter(t=>t.profit>0).length;
-const winRate  = ()=> closedTrades.length?(wins()/closedTrades.length*100).toFixed(1):'0.0';
-const avgRoi   = ()=> closedTrades.length?(closedTrades.reduce((s,t)=>s+t.roi,0)/closedTrades.length).toFixed(1):'0.0';
-const bestTrade= ()=> [...closedTrades].sort((a,b)=>b.profit-a.profit)[0];
-
-const fmt  = (n,d=0) => (+n).toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});
-const pct  = n => `${n>=0?'+':''}${(+n).toFixed(2)}%`;
-const pc   = n => n>=0?'cp':'cl';
-const bdg  = (n,txt) => `<span class="bdg ${n>=0?'bdg-p':'bdg-l'}">${txt}</span>`;
-
-const calcProfit = (b,s,sh) => +((s-b)*sh).toFixed(0);
-const calcRoi    = (b,s)    => b ? +(((s-b)/b)*100).toFixed(2) : 0;
-
-// ═══════════ HEADER ═════════════════════════════════════════
-function updateHeader(){
-  const tc=totalClosed(), to=totalOpenEst();
-  document.getElementById('hdr').innerHTML=`
-    <div class="hnum">
-      <div class="hnum-lbl">已實現損益</div>
-      <div class="hnum-val cp">+${fmt(tc)}</div>
-    </div>
-    <div style="width:1px;height:32px;background:var(--border)"></div>
-    <div class="hnum">
-      <div class="hnum-lbl">持倉預估</div>
-      <div class="hnum-val ${pc(to)}">${to>=0?'+':''}${fmt(to)}</div>
-    </div>`;
+// ── Grid + Y labels ──
+ctx.strokeStyle = 'rgba(0,0,0,0.07)';
+ctx.lineWidth = 1;
+ctx.fillStyle = '#888';
+ctx.font = '9px sans-serif';
+ctx.textAlign = 'right';
+var nTicks = 5;
+for(var t=0; t<=nTicks; t++){
+  var v  = yMin + t * (yMax - yMin) / nTicks;
+  var y0 = sy(v);
+  ctx.beginPath(); ctx.moveTo(PAD.left, y0); ctx.lineTo(PAD.left + gW, y0); ctx.stroke();
+  var lbl = Math.abs(v) >= 1000 ? (v/1000).toFixed(0)+'k' : Math.round(v)+'';
+  ctx.fillText(lbl, PAD.left - 3, y0 + 3);
 }
 
-// ═══════════ ROUTING ════════════════════════════════════════
-const pages=['overview','open','closed','chart'];
-function go(name){
-  pages.forEach(p=>document.getElementById('pv-'+p).style.display=p===name?'':'none');
-  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('active',pages[i]===name));
-  ({overview:renderOverview,open:renderOpen,closed:renderClosed,chart:renderChart})[name]();
-}
+// ── X labels ──
+ctx.textAlign = 'center';
+ctx.fillStyle = '#666';
+var maxL  = Math.max(1, Math.floor(gW / 28));
+var stepL = Math.max(1, Math.ceil(n / maxL));
+labels.forEach(function(lb, i){
+  if(i % stepL !== 0) return;
+  ctx.fillText(lb, sx(i), H - PAD.bottom + 12);
+});
 
-// ═══════════ OVERVIEW ═══════════════════════════════════════
-function renderOverview(){
-  const tc=totalClosed(),to=totalOpenEst(),total=tc+to;
-  const bt=bestTrade();
-  const topOpen=[...openPos].filter(p=>p.product!=='公勝保經').sort((a,b)=>ep(b)-ep(a));
-  document.getElementById('pv-overview').innerHTML=`
-  <div class="sgrid">
-    <div class="scard">
-      <div class="sc-lbl">已實現總損益</div>
-      <div class="sc-val cp">+${fmt(tc)}</div>
-      <div class="sc-sub">${closedTrades.length} 筆交易</div>
-      <div class="sc-bar"><div class="sc-bar-fill" style="width:100%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">持倉預估損益</div>
-      <div class="sc-val ${pc(to)}">${to>=0?'+':''}${fmt(to)}</div>
-      <div class="sc-sub">${openPos.length} 個部位（不含股票）</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">合計估算損益</div>
-      <div class="sc-val ${pc(total)}">${total>=0?'+':''}${fmt(total)}</div>
-      <div class="sc-sub">已實現 + 持倉估算</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">勝率</div>
-      <div class="sc-val cp">${winRate()}%</div>
-      <div class="sc-sub">${wins()} 勝 · ${closedTrades.length-wins()} 敗</div>
-      <div class="sc-bar"><div class="sc-bar-fill" style="width:${winRate()}%"></div></div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">平均獲利率</div>
-      <div class="sc-val cp">${avgRoi()}%</div>
-      <div class="sc-sub">已實現交易平均</div>
-    </div>
-    <div class="scard">
-      <div class="sc-lbl">最佳單筆</div>
-      <div class="sc-val cp">${bt?'+'+fmt(bt.profit):'—'}</div>
-      <div class="sc-sub" style="font-size:11px;word-break:break-all">${bt?bt.name:'—'}</div>
-    </div>
-  </div>
-  <div class="gold-line"></div>
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">持倉排行</span>
-      <span class="sec-sub">依預估損益由高到低 · 隨現價自動更新</span>
-    </div>
-    <div class="tw"><table>
-      <thead><tr><th>商品</th><th>持股數</th><th>現價</th><th>成本均價</th><th>預估損益</th><th>預估獲利率</th></tr></thead>
-      <tbody>${topOpen.map(p=>`<tr>
-        <td class="td-name">${p.product}</td>
-        <td>${fmt(p.shares)}</td>
-        <td class="${pc(ep(p))}" style="font-weight:700">${p.price}</td>
-        <td class="cm">${p.cost}</td>
-        <td>${bdg(ep(p),(ep(p)>=0?'+':'')+fmt(ep(p)))}</td>
-        <td class="${pc(eroi(p))}" style="font-weight:700">${pct(eroi(p))}</td>
-      </tr>`).join('')}</tbody>
-    </table></div>
-  </div>`;
-}
+// ── Bars ──
+if(type === 'bar'){
+  var barW   = Math.max(2, gW / n * 0.65);
+  var bases  = [];
+  for(var j=0;j<n;j++) bases.push(sy(0));
 
-// ═══════════ OPEN — click-to-edit + drag-to-reorder ════════
-let editingOpen=new Set();
-let dragSrcId=null; // id of row being dragged
-
-function renderOpen(){
-  document.getElementById('pv-open').innerHTML=`
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">未平倉部位明細</span>
-      <button class="sec-btn" onclick="openAddOpen()">＋ 新增部位</button>
-    </div>
-    <div class="tw"><table>
-      <thead><tr>
-        <th style="width:32px"></th>
-        <th>商品</th><th>持股數</th><th>現價</th><th>成本均價</th>
-        <th>市值</th><th>持有成本</th><th>預估損益</th><th>預估獲利率</th><th>損益平衡</th><th>操作</th>
-      </tr></thead>
-      <tbody id="open-body"></tbody>
-    </table></div>
-    <div class="tip">☰ 拖拉左側圖示可調整順序 · 點擊「編輯」修改欄位後按「儲存」確認</div>
-  </div>`;
-  editingOpen.clear();
-  renderOpenRows();
-}
-
-function renderOpenRows(){
-  const tbody=document.getElementById('open-body'); if(!tbody) return;
-  tbody.innerHTML=openPos.map(p=>{
-    const editing=editingOpen.has(p.id);
-    const rowBg=ep(p)>=0?'var(--profit-bg)':'var(--loss-bg)';
-
-    // handle column — always shown, enables drag
-    const handleTd=`<td style="padding:0 6px 0 12px;width:32px">
-      <span class="drag-handle" title="拖拉排序">⠿</span>
-    </td>`;
-
-    if(!editing) return `
-    <tr data-id="${p.id}" style="background:${rowBg}"
-        draggable="true"
-        ondragstart="onDragStart(event,${p.id})"
-        ondragover="onDragOver(event)"
-        ondragleave="onDragLeave(event)"
-        ondrop="onDrop(event,${p.id})"
-        ondragend="onDragEnd(event)">
-      ${handleTd}
-      <td class="td-name">${p.product}</td>
-      <td>${fmt(p.shares)}</td>
-      <td class="${pc(ep(p))}" style="font-weight:700">${p.price}</td>
-      <td class="cm">${p.cost}</td>
-      <td class="cm">${fmt(mv(p))}</td>
-      <td class="cm">${fmt(holdCost(p))}</td>
-      <td>${bdg(ep(p),(ep(p)>=0?'+':'')+fmt(ep(p)))}</td>
-      <td class="${pc(eroi(p))}" style="font-weight:700">${pct(eroi(p))}</td>
-      <td class="cm">${p.cost.toFixed(3)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditOpen(${p.id})">編輯</button>
-        <button class="rab btn-del"  onclick="delOpen(${p.id})">刪除</button>
-      </td>
-    </tr>`;
-
-    // editing mode — draggable=false so inputs work normally
-    return `
-    <tr data-id="${p.id}" style="background:${rowBg}" id="or-${p.id}" draggable="false">
-      ${handleTd}
-      <td><input class="edit-inp wide" id="pn-${p.id}" value="${p.product}"/></td>
-      <td><input class="edit-inp" id="ps-${p.id}" type="number" value="${p.shares}" style="min-width:80px"/></td>
-      <td><input class="edit-inp" id="pp-${p.id}" type="number" step="0.01" value="${p.price}" style="min-width:75px"/></td>
-      <td><input class="edit-inp" id="pc-${p.id}" type="number" step="0.01" value="${p.cost}" style="min-width:75px"/></td>
-      <td id="mv-${p.id}" class="cm" style="font-size:13px">${fmt(mv(p))}</td>
-      <td id="hc-${p.id}" class="cm" style="font-size:13px">${fmt(holdCost(p))}</td>
-      <td id="ep-${p.id}">${bdg(ep(p),(ep(p)>=0?'+':'')+fmt(ep(p)))}</td>
-      <td id="er-${p.id}" class="${pc(eroi(p))}" style="font-weight:700">${pct(eroi(p))}</td>
-      <td id="be-${p.id}" class="cm">${p.cost.toFixed(3)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-save" onclick="saveOpen(${p.id})">儲存</button>
-        <button class="rab btn-del"  onclick="delOpen(${p.id})">刪除</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  // ── Touch drag (iOS Safari) ──────────────────────────────
-  initTouchDrag();
-}
-
-// ── Mouse / Desktop drag events ──────────────────────────────
-function onDragStart(e, id){
-  dragSrcId=id;
-  e.dataTransfer.effectAllowed='move';
-  e.dataTransfer.setData('text/plain', id);
-  setTimeout(()=>e.target.classList.add('dragging'), 0);
-}
-function onDragOver(e){
-  e.preventDefault();
-  e.dataTransfer.dropEffect='move';
-  const row=e.currentTarget;
-  if(+row.dataset.id!==dragSrcId) row.classList.add('drag-over');
-}
-function onDragLeave(e){ e.currentTarget.classList.remove('drag-over') }
-function onDrop(e, targetId){
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if(dragSrcId===null||dragSrcId===targetId) return;
-  const fromIdx=openPos.findIndex(p=>p.id===dragSrcId);
-  const toIdx  =openPos.findIndex(p=>p.id===targetId);
-  if(fromIdx<0||toIdx<0) return;
-  const [moved]=openPos.splice(fromIdx,1);
-  openPos.splice(toIdx,0,moved);
-  renderOpenRows();
-}
-function onDragEnd(e){
-  e.target.classList.remove('dragging');
-  document.querySelectorAll('#open-body tr').forEach(r=>r.classList.remove('drag-over'));
-  dragSrcId=null;
-}
-
-// ── Touch drag (iOS / iPad) ──────────────────────────────────
-function initTouchDrag(){
-  const tbody=document.getElementById('open-body'); if(!tbody) return;
-  let touchSrcId=null, clone=null, startY=0, lastOver=null;
-
-  tbody.querySelectorAll('.drag-handle').forEach(handle=>{
-    handle.addEventListener('touchstart', e=>{
-      const row=handle.closest('tr');
-      if(!row||row.draggable===false) return; // skip edit-mode rows
-      touchSrcId=+row.dataset.id;
-      startY=e.touches[0].clientY;
-
-      // ghost clone
-      clone=row.cloneNode(true);
-      clone.style.cssText=`position:fixed;left:${row.getBoundingClientRect().left}px;
-        top:${row.getBoundingClientRect().top}px;width:${row.offsetWidth}px;
-        opacity:.75;pointer-events:none;z-index:999;
-        background:rgba(200,169,110,.15);border:1px solid #c8a96e;border-radius:6px;`;
-      document.body.appendChild(clone);
-      row.classList.add('dragging');
-      e.preventDefault();
-    },{passive:false});
-
-    handle.addEventListener('touchmove', e=>{
-      if(!clone||touchSrcId===null) return;
-      const touch=e.touches[0];
-      clone.style.top=(touch.clientY-30)+'px';
-
-      // find which row we're over
-      clone.style.display='none';
-      const el=document.elementFromPoint(touch.clientX, touch.clientY);
-      clone.style.display='';
-      const overRow=el?.closest('tr[data-id]');
-
-      if(lastOver&&lastOver!==overRow) lastOver.classList.remove('drag-over');
-      if(overRow&&+overRow.dataset.id!==touchSrcId){
-        overRow.classList.add('drag-over');
-        lastOver=overRow;
+  datasets.filter(function(ds){ return ds.type !== 'line'; }).forEach(function(ds){
+    ds.data.forEach(function(v, i){
+      if(!v) return;
+      var x   = sx(i) - barW / 2;
+      var bH  = bases[i] - sy(v);
+      if(bH > 0){
+        ctx.fillStyle = ds.backgroundColor || '#888';
+        ctx.fillRect(x, bases[i] - bH, barW, bH);
+        bases[i] -= bH;
       }
-      e.preventDefault();
-    },{passive:false});
-
-    handle.addEventListener('touchend', e=>{
-      if(clone){clone.remove();clone=null}
-      if(lastOver){lastOver.classList.remove('drag-over');lastOver=null}
-      const srcRow=tbody.querySelector(`tr[data-id="${touchSrcId}"]`);
-      if(srcRow) srcRow.classList.remove('dragging');
-
-      if(lastOver&&touchSrcId!==null){
-        const targetId=+lastOver.dataset.id;
-        const fromIdx=openPos.findIndex(p=>p.id===touchSrcId);
-        const toIdx  =openPos.findIndex(p=>p.id===targetId);
-        if(fromIdx>=0&&toIdx>=0){
-          const [moved]=openPos.splice(fromIdx,1);
-          openPos.splice(toIdx,0,moved);
-          renderOpenRows();
-        }
-      }
-      touchSrcId=null;
     });
   });
 }
 
-function startEditOpen(id){editingOpen.add(id);renderOpenRows()}
-function saveOpen(id){
-  const p=openPos.find(o=>o.id===id); if(!p) return;
-  p.product=document.getElementById('pn-'+id)?.value.trim()||p.product;
-  p.shares =+document.getElementById('ps-'+id)?.value||p.shares;
-  p.price  =+document.getElementById('pp-'+id)?.value||p.price;
-  p.cost   =+document.getElementById('pc-'+id)?.value||p.cost;
-  editingOpen.delete(id); renderOpenRows(); updateHeader();
-  if(!document.getElementById('pv-overview').style.display) renderOverview();
-}
-function delOpen(id){
-  if(!confirm('確定刪除此部位？')) return;
-  openPos=openPos.filter(p=>p.id!==id); editingOpen.delete(id);
-  renderOpenRows(); updateHeader();
-}
-
-// ═══════════ CLOSED ═════════════════════════════════════════
-let editingClosed=new Set();
-function renderClosed(){
-  document.getElementById('pv-closed').innerHTML=`
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title">已實現損益（${closedTrades.length} 筆）</span>
-      <div style="display:flex;gap:10px;align-items:center">
-        <span style="font-size:14px;color:#22c55e !important;font-weight:700">總計：+${fmt(totalClosed())}</span>
-        <button class="sec-btn" onclick="openAddClosed()">＋ 新增</button>
-      </div>
-    </div>
-    <div class="tw"><table>
-      <thead><tr>
-        <th>日期</th><th>商品全名</th><th>買進均價</th><th>賣出均價</th>
-        <th>股數</th><th>損益</th><th>獲利率%</th><th>操作</th>
-      </tr></thead>
-      <tbody id="closed-body"></tbody>
-    </table></div>
-    <div class="tip">損益 = (賣出 − 買進) × 股數，獲利率自動計算</div>
-  </div>`;
-  editingClosed.clear(); renderClosedRows();
-}
-function renderClosedRows(){
-  const b=document.getElementById('closed-body'); if(!b) return;
-  b.innerHTML=[...closedTrades].reverse().map(t=>{
-    const editing=editingClosed.has(t.id);
-    const bg=t.profit>=0?'var(--profit-bg)':'var(--loss-bg)';
-    if(!editing) return `<tr style="background:${bg}">
-      <td class="td-date">${t.date}</td>
-      <td class="td-name">${t.name}</td>
-      <td class="cm">${t.buyP}</td>
-      <td class="cm">${t.sellP}</td>
-      <td class="cm">${fmt(t.shares)}</td>
-      <td>${bdg(t.profit,(t.profit>=0?'+':'')+fmt(t.profit))}</td>
-      <td class="${pc(t.roi)}" style="font-weight:700">${pct(t.roi)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-edit" onclick="startEditClosed(${t.id})">編輯</button>
-        <button class="rab btn-del"  onclick="delClosed(${t.id})">刪除</button>
-      </td>
-    </tr>`;
-    return `<tr style="background:${bg}" id="cr-${t.id}">
-      <td><input class="edit-inp" id="cd-${t.id}" value="${t.date}" style="min-width:110px"/></td>
-      <td><input class="edit-inp wide" id="cn-${t.id}" value="${t.name}"/></td>
-      <td><input class="edit-inp" id="cbp-${t.id}" type="number" step="0.01" value="${t.buyP}"  style="min-width:70px" oninput="previewClosed(${t.id})"/></td>
-      <td><input class="edit-inp" id="csp-${t.id}" type="number" step="0.01" value="${t.sellP}" style="min-width:70px" oninput="previewClosed(${t.id})"/></td>
-      <td><input class="edit-inp" id="csh-${t.id}" type="number" value="${t.shares}" style="min-width:80px" oninput="previewClosed(${t.id})"/></td>
-      <td id="cpr-${t.id}">${bdg(t.profit,(t.profit>=0?'+':'')+fmt(t.profit))}</td>
-      <td id="cri-${t.id}" class="${pc(t.roi)}" style="font-weight:700">${pct(t.roi)}</td>
-      <td style="white-space:nowrap;display:flex;gap:6px;padding:9px 15px">
-        <button class="rab btn-save" onclick="saveClosed(${t.id})">儲存</button>
-        <button class="rab btn-del"  onclick="delClosed(${t.id})">刪除</button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-function previewClosed(id){
-  const bp=+document.getElementById('cbp-'+id)?.value||0;
-  const sp=+document.getElementById('csp-'+id)?.value||0;
-  const sh=+document.getElementById('csh-'+id)?.value||0;
-  if(!bp||!sp||!sh) return;
-  const pr=calcProfit(bp,sp,sh), ri=calcRoi(bp,sp);
-  const pEl=document.getElementById('cpr-'+id), rEl=document.getElementById('cri-'+id);
-  if(pEl) pEl.innerHTML=bdg(pr,(pr>=0?'+':'')+fmt(pr));
-  if(rEl){rEl.textContent=pct(ri);rEl.className=pc(ri);rEl.style.fontWeight='700'}
-}
-function startEditClosed(id){editingClosed.add(id);renderClosedRows()}
-function saveClosed(id){
-  const t=closedTrades.find(x=>x.id===id); if(!t) return;
-  t.date  =document.getElementById('cd-'+id)?.value||t.date;
-  t.name  =document.getElementById('cn-'+id)?.value.trim()||t.name;
-  t.buyP  =+document.getElementById('cbp-'+id)?.value||t.buyP;
-  t.sellP =+document.getElementById('csp-'+id)?.value||t.sellP;
-  t.shares=+document.getElementById('csh-'+id)?.value||t.shares;
-  t.profit=calcProfit(t.buyP,t.sellP,t.shares);
-  t.roi   =calcRoi(t.buyP,t.sellP);
-  editingClosed.delete(id); renderClosedRows(); updateHeader();
-  if(!document.getElementById('pv-overview').style.display) renderOverview();
-}
-function delClosed(id){
-  if(!confirm('確定刪除？')) return;
-  closedTrades=closedTrades.filter(t=>t.id!==id); editingClosed.delete(id);
-  renderClosedRows(); updateHeader();
-  if(!document.getElementById('pv-overview').style.display) renderOverview();
-}
-
-// ═══════════ MODALS ═════════════════════════════════════════
-function openAddOpen(){
-  document.getElementById('modal-title').textContent='新增持倉部位';
-  document.getElementById('modal-body').innerHTML=`
-  <div class="f-grid">
-    <div class="f-group full"><label class="f-lbl">商品全名</label>
-      <input class="f-inp" id="m-product" placeholder="例：聯發科元大61購11"/></div>
-    <div class="f-row">
-      <div class="f-group"><label class="f-lbl">持股數</label>
-        <input class="f-inp" id="m-shares" type="number" placeholder="5000" oninput="mPrevOpen()"/></div>
-      <div class="f-group"><label class="f-lbl">買進均價（成本）</label>
-        <input class="f-inp" id="m-cost" type="number" step="0.01" placeholder="0.65" oninput="mPrevOpen()"/></div>
-      <div class="f-group"><label class="f-lbl">現價</label>
-        <input class="f-inp" id="m-price" type="number" step="0.01" placeholder="1.20" oninput="mPrevOpen()"/></div>
-    </div>
-    <div class="prev-box" id="m-prev"></div>
-  </div>`;
-  document.getElementById('modal-ok').onclick=submitOpen;
-  document.getElementById('modal').classList.add('open');
-}
-function mPrevOpen(){
-  const sh=+document.getElementById('m-shares')?.value||0;
-  const co=+document.getElementById('m-cost')?.value||0;
-  const pr=+document.getElementById('m-price')?.value||0;
-  const box=document.getElementById('m-prev'); if(!box) return;
-  if(sh&&co&&pr){
-    const hc=co*sh, mv2=pr*sh, ep2=mv2-hc, ri=(ep2/hc*100).toFixed(2);
-    box.style.display='block';
-    box.innerHTML=`持有成本：<strong>${fmt(hc)}</strong> &nbsp;|&nbsp; 市值：<strong>${fmt(mv2)}</strong><br>
-      預估損益：<strong style="color:${ep2>=0?'#22c55e':'#f43f5e'}">${ep2>=0?'+':''}${fmt(ep2)}</strong>
-      &nbsp;&nbsp; 獲利率：<strong style="color:${ep2>=0?'#22c55e':'#f43f5e'}">${ep2>=0?'+':''}${ri}%</strong>`;
-  } else box.style.display='none';
-}
-function submitOpen(){
-  const product=document.getElementById('m-product')?.value.trim();
-  const shares=+document.getElementById('m-shares')?.value;
-  const cost=+document.getElementById('m-cost')?.value;
-  const price=+document.getElementById('m-price')?.value;
-  if(!product||!shares||!cost||!price){alert('請填寫所有欄位');return}
-  openPos.push({id:++nextOpenId,product,shares,price,cost});
-  closeModal(); renderOpen(); updateHeader();
-}
-function openAddClosed(){
-  document.getElementById('modal-title').textContent='新增已實現損益';
-  document.getElementById('modal-body').innerHTML=`
-  <div class="f-grid">
-    <div class="f-row">
-      <div class="f-group" style="min-width:145px"><label class="f-lbl">賣出日期</label>
-        <input class="f-inp" id="m-date" type="date"/></div>
-      <div class="f-group full"><label class="f-lbl">商品全名</label>
-        <input class="f-inp" id="m-product" placeholder="例：聯發科元大61購11"/></div>
-    </div>
-    <div class="f-row">
-      <div class="f-group"><label class="f-lbl">買進均價</label>
-        <input class="f-inp" id="m-buyp" type="number" step="0.01" placeholder="0.65" oninput="mPrevClosed()"/>
-        <span class="f-hint">當初買入的平均價格</span></div>
-      <div class="f-group"><label class="f-lbl">賣出均價</label>
-        <input class="f-inp" id="m-sellp" type="number" step="0.01" placeholder="1.20" oninput="mPrevClosed()"/>
-        <span class="f-hint">實際賣出的平均價格</span></div>
-      <div class="f-group"><label class="f-lbl">賣出股數</label>
-        <input class="f-inp" id="m-shares" type="number" placeholder="4000" oninput="mPrevClosed()"/>
-        <span class="f-hint">張數 × 1000</span></div>
-    </div>
-    <div class="prev-box" id="m-prev"></div>
-    <p style="font-size:12px;color:#6b7691 !important;line-height:1.8">
-      📌 損益 = (賣出 − 買進) × 股數 · 獲利率自動計算，不需手填
-    </p>
-  </div>`;
-  document.getElementById('modal-ok').onclick=submitClosed;
-  document.getElementById('modal').classList.add('open');
-}
-function mPrevClosed(){
-  const bp=+document.getElementById('m-buyp')?.value||0;
-  const sp=+document.getElementById('m-sellp')?.value||0;
-  const sh=+document.getElementById('m-shares')?.value||0;
-  const box=document.getElementById('m-prev'); if(!box) return;
-  if(bp&&sp&&sh){
-    const pr=calcProfit(bp,sp,sh), ri=calcRoi(bp,sp);
-    box.style.display='block';
-    box.innerHTML=`買入成本：<strong>${fmt(bp*sh)}</strong> &nbsp;|&nbsp; 賣出金額：<strong>${fmt(sp*sh)}</strong><br>
-      損益：<strong style="color:${pr>=0?'#22c55e':'#f43f5e'}">${pr>=0?'+':''}${fmt(pr)}</strong>
-      &nbsp;&nbsp; 獲利率：<strong style="color:${pr>=0?'#22c55e':'#f43f5e'}">${pct(ri)}</strong>`;
-  } else box.style.display='none';
-}
-function submitClosed(){
-  const date=(document.getElementById('m-date')?.value||'').replace(/-/g,'/');
-  const name=document.getElementById('m-product')?.value.trim();
-  const buyP=+document.getElementById('m-buyp')?.value;
-  const sellP=+document.getElementById('m-sellp')?.value;
-  const shares=+document.getElementById('m-shares')?.value;
-  if(!date||!name||!buyP||!sellP||!shares){alert('請填寫日期、商品、買進均價、賣出均價、股數');return}
-  const profit=calcProfit(buyP,sellP,shares), roi=calcRoi(buyP,sellP);
-  closedTrades.push({id:++nextCloseId,date,name,buyP,sellP,shares,profit,roi});
-  closeModal(); renderClosed(); updateHeader();
-  if(!document.getElementById('pv-overview').style.display) renderOverview();
-}
-function closeModal(){document.getElementById('modal').classList.remove('open')}
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
-
-// ═══════════ CHART ══════════════════════════════════════════
-let chartInst=null, chartMode='cumulative', dateFrom='', dateTo='';
-function buildChartData(){
-  const byDate={};
-  closedTrades.forEach(t=>{
-    if(!byDate[t.date]) byDate[t.date]={daily:0,trades:[]};
-    byDate[t.date].daily+=t.profit;
-    byDate[t.date].trades.push(t);
+// ── Lines ──
+var lineDsets = type === 'line' ? datasets : datasets.filter(function(ds){ return ds.type === 'line'; });
+lineDsets.forEach(function(ds){
+  var data = ds.data || [];
+  if(!data.length) return;
+  ctx.strokeStyle = ds.borderColor || '#333';
+  ctx.lineWidth   = ds.borderWidth || 2;
+  ctx.setLineDash(ds.borderDash || []);
+  ctx.beginPath();
+  var started = false;
+  data.forEach(function(v, i){
+    if(v == null) return;
+    var x = sx(i), y = sy(v);
+    if(!started){ ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
   });
-  const norm=s=>s.replace(/[-/]/g,'');
-  let rows=Object.keys(byDate).sort().map(d=>({
-    fullDate:d, label:d.slice(5),
-    daily:byDate[d].daily,
-    trades:byDate[d].trades,
-    cumulative:0,
-  }));
-  if(dateFrom) rows=rows.filter(r=>norm(r.fullDate)>=norm(dateFrom));
-  if(dateTo)   rows=rows.filter(r=>norm(r.fullDate)<=norm(dateTo));
-  let c=0; return rows.map(r=>{c+=r.daily;return{...r,cumulative:c,count:r.trades.length}});
-}
-function renderChart(){
-  document.getElementById('pv-chart').innerHTML=`
-  <div class="chart-ctrl">
-    <div class="cg-wrap"><span class="cg-lbl">圖表類型</span>
-      <div class="tog-row">
-        <button class="tog ${chartMode==='cumulative'?'active':''}" onclick="setMode('cumulative')">📈 累計走勢</button>
-        <button class="tog ${chartMode==='daily'?'active':''}" onclick="setMode('daily')">📊 每日損益</button>
-      </div>
-    </div>
-    <div class="cg-wrap"><span class="cg-lbl">起始日期</span>
-      <input type="date" class="date-inp" id="df" value="${dateFrom}" onchange="setDF(this.value)"/></div>
-    <div class="cg-wrap"><span class="cg-lbl">結束日期</span>
-      <input type="date" class="date-inp" id="dt" value="${dateTo}" onchange="setDT(this.value)"/></div>
-    <div class="cg-wrap" style="padding-bottom:1px"><span class="cg-lbl">&nbsp;</span>
-      <button class="clr-btn" onclick="clearDates()">✕ 清除</button></div>
-  </div>
-  <div class="filter-banner" id="fb"></div>
-  <div class="sec">
-    <div class="sec-hd">
-      <span class="sec-title" id="ct-title">累計損益走勢</span>
-      <span class="sec-sub" id="ct-sub"></span>
-    </div>
-    <div class="cw"><canvas id="mc" height="260"></canvas></div>
-  </div>
-  <div class="sec">
-    <div class="sec-hd"><span class="sec-title">各交易日明細（含買賣明細）</span></div>
-    <div class="tw" id="chart-detail"></div>
-  </div>`;
-  drawChart();
-}
-function drawChart(){
-  const data=buildChartData();
-  const fb=document.getElementById('fb');
-  if(fb){
-    if(dateFrom||dateTo){
-      fb.style.display='block';
-      fb.textContent=`篩選範圍：${dateFrom||'最早'} ～ ${dateTo||'最新'}　共 ${data.length} 個交易日`;
-    } else fb.style.display='none';
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // dots
+  if(ds.pointRadius && ds.pointRadius > 0){
+    ctx.fillStyle = ds.borderColor || '#333';
+    data.forEach(function(v, i){
+      if(v == null) return;
+      ctx.beginPath();
+      ctx.arc(sx(i), sy(v), ds.pointRadius, 0, Math.PI*2);
+      ctx.fill();
+    });
   }
-  const tEl=document.getElementById('ct-title');
-  if(tEl) tEl.textContent=chartMode==='cumulative'?'累計損益走勢':'每日損益';
-  const rangeSum=data.reduce((s,r)=>s+r.daily,0);
-  const sEl=document.getElementById('ct-sub');
-  if(sEl&&data.length) sEl.innerHTML=`範圍合計：<span style="color:${rangeSum>=0?'#22c55e':'#f43f5e'};font-weight:700">${rangeSum>=0?'+':''}${fmt(rangeSum)}</span>`;
-  document.querySelectorAll('.tog').forEach((b,i)=>b.classList.toggle('active',[chartMode==='cumulative',chartMode==='daily'][i]));
+});
 
-  if(chartInst){chartInst.destroy();chartInst=null}
-  const ctx=document.getElementById('mc'); if(!ctx) return;
-  const labels=data.map(d=>d.label);
-  const daily=data.map(d=>d.daily);
-  const cumul=data.map(d=>d.cumulative);
-  const G='rgba(200,169,110,';
+// ── Legend ──
+var lx = PAD.left, ly = H - 6;
+ctx.font      = '9px sans-serif';
+ctx.textAlign = 'left';
+datasets.filter(function(d){ return d.label; }).forEach(function(ds){
+  var col = ds.borderColor || ds.backgroundColor || '#888';
+  var lbl = ds.label || '';
+  var tw  = lbl.length * 5.5 + 16;
+  if(lx + tw > W - PAD.right){ lx = PAD.left; ly -= 12; }
+  ctx.fillStyle = col;
+  ctx.fillRect(lx, ly - 7, 9, 7);
+  ctx.fillStyle = '#444';
+  ctx.fillText(lbl, lx + 12, ly);
+  lx += tw;
+});
+```
 
-  if(chartMode==='cumulative'){
-    chartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[{
-      label:'累計損益',data:cumul,
-      borderColor:G+'0.9)',backgroundColor:G+'0.07)',
-      pointBackgroundColor:G+'1)',pointRadius:5,pointHoverRadius:8,
-      borderWidth:2.5,fill:true,tension:.35}]},
-      options:{responsive:true,plugins:{legend:{display:false},
-        tooltip:{backgroundColor:'#1d2238',borderColor:G+'0.4)',borderWidth:1,
-          titleColor:'#e2c99a',bodyColor:'#e6e1d8',padding:10,
-          callbacks:{label:c=>`累計：${c.raw>=0?'+':''}${c.raw.toLocaleString()} 元`}}},
-        scales:{x:{grid:{color:G+'0.07)'},ticks:{color:'#6b7691',font:{size:12}}},
-                y:{grid:{color:G+'0.07)'},ticks:{color:'#6b7691',font:{size:12}}}}}});
-  } else {
-    chartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[{
-      label:'每日損益',data:daily,
-      backgroundColor:daily.map(v=>v>=0?'rgba(34,197,94,.4)':'rgba(244,63,94,.4)'),
-      borderColor:daily.map(v=>v>=0?'rgba(34,197,94,.85)':'rgba(244,63,94,.85)'),
-      borderWidth:1.5,borderRadius:5}]},
-      options:{responsive:true,plugins:{legend:{display:false},
-        tooltip:{backgroundColor:'#1d2238',borderColor:G+'0.4)',borderWidth:1,
-          titleColor:'#e2c99a',bodyColor:'#e6e1d8',padding:10,
-          callbacks:{label:c=>`當日：${c.raw>=0?'+':''}${c.raw.toLocaleString()} 元`}}},
-        scales:{x:{grid:{color:G+'0.07)'},ticks:{color:'#6b7691',font:{size:12}}},
-                y:{grid:{color:G+'0.07)'},ticks:{color:'#6b7691',font:{size:12}}}},
-        animation:{onComplete:()=>{
-          if(!chartInst) return;
-          const meta=chartInst.getDatasetMeta(0),c2=chartInst.ctx;
-          c2.save();c2.font='bold 12px -apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif';c2.textAlign='center';
-          meta.data.forEach((bar,i)=>{
-            const v=daily[i];
-            c2.fillStyle=v>=0?'#22c55e':'#f43f5e';
-            c2.fillText((v>=0?'+':'')+v.toLocaleString(),bar.x,v>=0?bar.y-6:bar.y+bar.height+15);
-          });
-          c2.restore();
-        }}
-      }});
-  }
+};
 
-  // Detail table with sub-rows
-  const det=document.getElementById('chart-detail'); if(!det) return;
-  det.innerHTML=`<table>
-    <thead><tr>
-      <th>日期</th><th>當日損益</th><th>累計損益</th><th>筆數</th>
-    </tr></thead>
-    <tbody>${data.map(r=>`
-      <tr style="background:${r.daily>=0?'var(--profit-bg)':'var(--loss-bg)'}">
-        <td class="td-date" style="font-weight:600">${r.fullDate}</td>
-        <td>${bdg(r.daily,(r.daily>=0?'+':'')+fmt(r.daily))}</td>
-        <td class="${pc(r.cumulative)}" style="font-weight:700">${r.cumulative>=0?'+':''}${fmt(r.cumulative)}</td>
-        <td class="cm">${r.count}</td>
-      </tr>
-      <tr style="background:${r.daily>=0?'rgba(34,197,94,.02)':'rgba(244,63,94,.02)'}">
-        <td colspan="4" style="padding:4px 15px 14px 28px">
-          <div class="trade-detail"><table style="width:100%">
-            <thead><tr>
-              <th>商品</th><th>買進均價</th><th>賣出均價</th><th>股數</th><th>損益</th><th>獲利率</th>
-            </tr></thead>
-            <tbody>${r.trades.map(t=>`<tr>
-              <td class="td-name" style="font-size:13px">${t.name}</td>
-              <td class="cm" style="font-size:13px">${t.buyP}</td>
-              <td class="cm" style="font-size:13px">${t.sellP}</td>
-              <td class="cm" style="font-size:13px">${fmt(t.shares)}</td>
-              <td>${bdg(t.profit,(t.profit>=0?'+':'')+fmt(t.profit))}</td>
-              <td class="${pc(t.roi)}" style="font-weight:700;font-size:13px">${pct(t.roi)}</td>
-            </tr>`).join('')}</tbody>
-          </table></div>
-        </td>
-      </tr>`).join('')}
-    </tbody>
-  </table>`;
+// Redraw all on scroll (for lazy render)
+window.addEventListener(‘scroll’, function(){
+instances.forEach(function(inst){
+if(inst._retries > 0 || inst.canvas.width < 10){
+requestAnimationFrame(function(){ inst._safeDraw(); });
 }
-function setMode(m){chartMode=m;drawChart()}
-function setDF(v){dateFrom=v;drawChart()}
-function setDT(v){dateTo=v;drawChart()}
-function clearDates(){
-  dateFrom='';dateTo='';
-  const a=document.getElementById('df'),b=document.getElementById('dt');
-  if(a)a.value='';if(b)b.value='';drawChart();
-}
+});
+}, {passive:true});
 
-// ═══════════ EXPORT SNAPSHOT ════════════════════════════════
-// Reads current in-memory data, injects it into a fresh copy of
-// this page's HTML, and triggers a download.  The downloaded file
-// is fully self-contained — open it anywhere without a server.
-function exportSnapshot(){
-  const src = document.documentElement.outerHTML;
+function Chart(canvas, config){ return new MiniChart(canvas, config); }
+Chart.prototype = MiniChart.prototype;
+global.MiniChart = MiniChart;
+global.Chart = Chart;
 
-  // Serialise current live data
-  const openJSON   = JSON.stringify(openPos,  null, 2);
-  const closedJSON = JSON.stringify(closedTrades, null, 2);
-
-  // Replace the initial data arrays in the source
-  // We look for the exact variable declarations and swap them out.
-  let out = src;
-
-  // Replace openPos array
-  out = out.replace(
-    /let openPos\s*=\s*\[[\s\S]*?\];(?=\s*\n)/,
-    `let openPos = ${openJSON};`
-  );
-  // Replace closedTrades array
-  out = out.replace(
-    /let closedTrades\s*=\s*\[[\s\S]*?\];(?=\s*\n)/,
-    `let closedTrades = ${closedJSON};`
-  );
-
-  // Also update nextOpenId / nextCloseId so new additions don't collide
-  out = out.replace(
-    /let nextOpenId\s*=\s*\d+/,
-    `let nextOpenId=${Math.max(...openPos.map(p=>p.id),20)+1}`
-  );
-  out = out.replace(
-    /let nextCloseId\s*=\s*\d+/,
-    `let nextCloseId=${Math.max(...closedTrades.map(t=>t.id),30)+1}`
-  );
-
-  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  const filename = `warrant-ledger-${today}.html`;
-
-  const blob = new Blob([out], {type:'text/html;charset=utf-8'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  setTimeout(()=>URL.revokeObjectURL(url), 2000);
-}
-
-// ═══════════ INIT ════════════════════════════════════════════
-updateHeader(); renderOverview();
+})(window);
 </script>
 
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ede9e0;--paper:#fff;--paper2:#f6f3ed;--border:#c8c0b0;--border2:#ddd8cc;
+  --ink:#1a1a1a;--ink2:#3a3630;--muted:#7a7060;
+  --A:#0a5c4a;--A-bg:#e2f3ee;--A-bd:#7ecfba;
+  --B:#0f3d7a;--B-bg:#e2ecf8;--B-bd:#7aaad8;
+  --C:#6e3f00;--C-bg:#fdefd6;--C-bd:#d4a050;
+  --D:#5a2d8a;--D-bg:#f0eaf8;--D-bd:#b090d8;
+  --red:#b83030;--red-bg:#fce8e8;--green:#0a5c4a;--gold:#7a5000;
+  --warn:#c07000;--warn-bg:#fff3d6;--purple:#5a2d8a;--purple-bg:#f0eaf8;--purple-bd:#b090d8;
+}
+body{background:var(--bg);color:var(--ink);font-family:'Noto Sans TC',sans-serif;padding:20px 14px;min-height:100vh;font-size:14px}
+.page{max-width:1220px;margin:0 auto}
+.hdr{background:var(--ink);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.hdr h1{font-family:'Noto Serif TC',serif;font-size:22px;font-weight:900;line-height:1.4}
+.hdr h1 em{color:#f0c060;font-style:normal}
+.hdr-r{text-align:right;font-size:12px;line-height:2.1;color:#b0a898}
+.hdr-r strong{color:#f0c060;font-size:14px}
+.panel-title{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.panel-title::after{content:'';flex:1;height:2px;background:var(--border2)}
+.panel-title.A{color:var(--A)} .panel-title.B{color:var(--B)} .panel-title.C{color:var(--C)} .panel-title.purple{color:var(--purple)}
+.sec{font-size:10px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:2px;background:var(--border2)}
+.panel,.settings,.relay-panel,.advisor-panel{background:var(--paper);border:2px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:18px}
+.settings-body{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.sg,.policy-card,.advisor-card{background:var(--paper2);border:1.5px solid var(--border2);border-radius:10px;padding:13px 15px}
+.sg h4,.policy-card h4,.advisor-card h4{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.sg.G h4{color:var(--gold)}.sg.P h4{color:var(--purple)}
+.f{margin-bottom:8px}
+.f label{display:block;font-size:10px;font-weight:700;color:var(--muted);margin-bottom:3px;letter-spacing:.03em}
+.f input,.f select,.f textarea{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 9px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);background:var(--paper);outline:none;transition:border-color .2s;-webkit-appearance:none}
+.f textarea{font-family:'Noto Sans TC',sans-serif;font-weight:500;min-height:88px;line-height:1.7;resize:vertical}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--A)}
+.btn-row{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+button{font-family:'Noto Sans TC',sans-serif}
+.btn-calc,.btn-add,.btn-rst,.btn-del,.btn-small{border:none;border-radius:9px;font-weight:900;cursor:pointer;transition:all .2s}
+.btn-calc{padding:12px;background:var(--ink);color:#fff;font-size:14px}
+.btn-add{padding:12px 16px;background:var(--purple);color:#fff;font-size:12px}
+.btn-rst{padding:12px 16px;background:transparent;color:var(--muted);border:1.5px solid var(--border);font-size:12px}
+.btn-del{padding:8px 10px;background:var(--red);color:#fff;font-size:11px}
+.btn-small{padding:8px 10px;background:var(--ink);color:#fff;font-size:11px}
+.policy-list{display:grid;grid-template-columns:1fr;gap:12px}
+.policy-card{border-width:2px}
+.policy-card.tone0{border-color:var(--A-bd)}
+.policy-card.tone1{border-color:var(--B-bd)}
+.policy-card.tone2{border-color:var(--C-bd)}
+.policy-card.tone3{border-color:var(--D-bd)}
+.policy-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.policy-head h4{font-size:13px;margin-bottom:4px}
+.policy-head small{font-family:'DM Mono',monospace;color:var(--muted)}
+.policy-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.fixed-box{display:block}
+.policy-card.use-table .fixed-box{display:block}
+.help{font-size:10.5px;color:var(--muted);font-weight:500;line-height:1.8;margin-top:4px}
+.note-bar{background:var(--warn-bg);border:1.5px solid #ddc060;border-radius:10px;padding:11px 16px;font-size:11.5px;color:var(--ink2);line-height:1.9;margin-bottom:18px;font-weight:500}
+.note-bar strong{font-weight:900;color:var(--ink)}
+.advisor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.advisor-card p{font-size:11.5px;line-height:1.85;color:var(--ink2);white-space:pre-wrap}
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:2px solid var(--border);margin-bottom:10px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;background:var(--paper);font-size:12.5px}
+thead tr:first-child th{background:var(--ink);color:#fff;font-size:10px;letter-spacing:.04em;padding:10px 8px 5px;font-weight:700}
+thead tr:last-child th{background:#2a2a2a;color:#b8b0a0;font-size:9.5px;padding:4px 8px 8px;font-weight:600;white-space:nowrap}
+th,td{text-align:right}th:first-child,td:first-child{text-align:left}
+tbody tr{border-bottom:1.5px solid var(--border2)}
+tbody tr:nth-child(even){background:var(--paper)}
+tbody tr:hover{background:var(--paper)}
+tbody tr.milestone{background:var(--paper)!important;border-left:0!important}
+tbody tr.danger{background:var(--paper)!important;border-left:0!important}
+td{padding:9px 8px;font-family:'DM Mono',monospace;font-size:12.5px;font-weight:600;white-space:nowrap}
+td.yr-cell{font-family:'Noto Sans TC',sans-serif;font-size:11.5px;font-weight:900;padding-left:12px;line-height:1.7;min-width:90px}
+td.wd{color:var(--red);font-weight:700}td.ic{color:var(--green);font-weight:700}
+td.sv-t{color:var(--gold);font-weight:900;font-size:13px}
+td.twd-ok{font-weight:900;font-size:13px;background:#e8f8e8;color:var(--green)}
+td.twd-sh{font-weight:900;font-size:13px;background:#fef0f0;color:var(--red)}
+td.twd-ne{font-weight:900;font-size:13px;background:#fff8e8;color:var(--warn)}
+tr.grand{background:var(--ink)!important}
+tr.grand td{color:#f0c060;font-weight:900;font-size:13px;padding:12px 8px;border-top:2px solid #555}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;overflow:visible}
+.chart-box{background:var(--paper);border:2px solid var(--border);border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);min-height:280px;display:flex;flex-direction:column;overflow:hidden}
+.chart-box{min-height:280px;display:flex;flex-direction:column}.chart-box h3{font-size:12px;font-weight:900;color:var(--ink2);margin-bottom:12px;flex-shrink:0}.chart-box canvas{flex:1;min-height:220px!important;width:100%!important}
+.footer{border-top:2px solid var(--border);padding-top:12px;font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;line-height:1.9;font-weight:500}
+.client-mode .edit-only{display:none!important}
+@media(max-width:900px){
+  .settings-body,.policy-grid,.advisor-grid,.charts{grid-template-columns:1fr}
+  .btn-row{grid-template-columns:1fr}
+  td,th{font-size:11px;padding:7px 6px}
+}
 
 
-</div></body></html>
+/* ── Lump sum withdrawals ── */
+.lump-panel{background:var(--paper);border:2px solid #d4a050;border-radius:14px;padding:18px 22px;margin-bottom:18px}
+.lump-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:10px}
+.lump-row{background:var(--paper2);border:1.5px solid var(--border2);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lump-row label{font-size:10.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.lump-row input,.lump-row select{border:1.5px solid var(--border);border-radius:5px;padding:5px 8px;font-family:"DM Mono",monospace;font-size:12px;font-weight:700;color:var(--ink);background:var(--paper);outline:none;flex:1;min-width:60px}
+.lump-row input:focus,.lump-row select:focus{border-color:var(--C)}
+.lump-del{background:var(--red);color:#fff;border:none;border-radius:5px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer}
+td.lump-cell{color:#7a5000;font-weight:700;font-size:11px}
+@media print{
+  .edit-only,.modeBar{display:none!important}
+  body{background:#fff;padding:0}
+  .page{max-width:100%}
+  .tbl-wrap{box-shadow:none;border:1px solid #ccc}
+  .hdr{border-radius:0;page-break-inside:avoid}
+  .charts{page-break-before:always}
+}
+td.group-start, th.group-start{border-left:2.5px solid var(--border)!important}
+td.total-start, th.total-start{border-left:3px solid var(--ink)!important}
+.status-note{font-family:'Noto Sans TC',sans-serif;font-size:10px;color:var(--muted);font-weight:700;white-space:normal;min-width:70px}
+
+/* ── Per-year ratio table ── */
+.ratio-section{margin-top:10px;border-top:1.5px dashed var(--border2);padding-top:10px}
+.ratio-section-title{font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ratio-mode-toggle{display:flex;gap:6px;flex-wrap:wrap}
+.ratio-mode-toggle label{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;cursor:pointer;color:var(--ink2);background:var(--paper2);border:1.5px solid var(--border);border-radius:6px;padding:3px 9px;transition:all .2s}
+.ratio-mode-toggle input[type=radio]{accent-color:var(--A);width:13px;height:13px}
+.ratio-mode-toggle label:has(input:checked){background:var(--A-bg);border-color:var(--A-bd);color:var(--A)}
+.ratio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin-top:8px}
+.ratio-row{display:flex;align-items:center;gap:5px;background:var(--paper2);border:1.5px solid var(--border2);border-radius:7px;padding:5px 8px}
+.ratio-row label{font-size:10px;font-weight:700;color:var(--muted);min-width:36px;white-space:nowrap}
+.ratio-row input{width:52px;border:1.5px solid var(--border);border-radius:5px;padding:4px 6px;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--ink);background:var(--paper);outline:none;text-align:right}
+.ratio-row input:focus{border-color:var(--A)}
+.ratio-row .pct{font-size:10px;color:var(--muted);font-weight:700}
+.ratio-row.auto-fill{background:var(--warn-bg);border-color:#ddc060}
+.ratio-row.auto-fill label{color:var(--warn)}
+td.pct-cell{font-family:'DM Mono',monospace;font-size:11px;color:var(--purple);font-weight:700}
+</style>
+
+</head>
+<body>
+<div class="page" id="page">
+
+<div class="hdr">
+  <div>
+    <h1>多保單整合智能試算<br><em id="titleName">客製報告</em></h1>
+  </div>
+  <div class="hdr-r">
+    製表：<span id="today"></span><br>
+    <strong id="clientMeta">客戶資料可切換</strong><br>
+    <span id="modeText">顧問模式</span>
+  </div>
+</div>
+
+<div style="background:#e8f4ef;border:1.5px solid #7ecfba;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:11.5px;line-height:1.9;color:#1a3a30">
+  <strong style="font-size:12px">🌐 GitHub Pages 部署說明：</strong><br>
+  在 GitHub 建立 repo → 上傳此 HTML 檔案並命名為 <code style="background:#fff;padding:1px 5px;border-radius:3px">index.html</code> → Settings → Pages → Branch: main → Save。
+  圖表若空白：在 repo 根目錄新增 <code style="background:#fff;padding:1px 5px;border-radius:3px">_config.yml</code>，內容填 <code style="background:#fff;padding:1px 5px;border-radius:3px">plugins: []</code> 即可解決 Jekyll 干擾。
+</div>
+<div class="panel" style="padding:12px 18px;margin-bottom:18px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button class="btn-small" onclick="saveAsJson()" style="background:var(--A)">💾 匯出設定檔</button>
+    <label class="btn-small" style="background:var(--B);cursor:pointer;display:inline-block">
+      📂 讀取設定檔 (.json)
+      <input type="file" accept=".json,application/json" onchange="loadFromJson(event)" style="display:none">
+    </label>
+    <button class="btn-small" onclick="exportHTML()" style="background:var(--purple)">⬇ 匯出 HTML 檔案</button>
+    <button class="btn-small" onclick="printPage()" style="background:var(--gold)">🖨 列印 / 存成 PDF</button>
+    <span style="font-size:11px;color:var(--muted);margin-left:8px" id="saveStatus"></span>
+  </div>
+</div>
+<div class="panel" id="modeBar" style="padding:12px 18px;margin-bottom:18px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <div style="font-size:12px;color:var(--muted);font-weight:900">目前模式：<span id="modeInline">顧問模式</span></div>
+    <button id="modeBtn" class="btn-small" onclick="toggleClientMode()">切換客戶模式</button>
+  </div>
+</div>
+
+<div class="settings edit-only">
+  <div class="panel-title purple">👤 客戶資料與全域設定</div>
+  <div class="settings-body">
+    <div class="sg P">
+      <h4>客戶資料</h4>
+      <div class="f"><label>客戶姓名</label><input id="clientName" value="陳志強" oninput="syncHeader()"></div>
+      <div class="f"><label>起始年齡</label><input id="clientAge" type="number" value="83" oninput="syncHeader()"></div>
+    </div>
+    <div class="sg G">
+      <h4>提領設定</h4>
+      <div class="f"><label>年領目標 (TWD)</label><input id="targetTWD" type="number" value="400000" step="5000"></div>
+      <div class="f"><label>定期提領起始年（前幾年只用單筆）</label><input id="regularStartYear" type="number" value="1" min="1" max="30" title="例如填3，代表第1-2年不做定期提領，第3年起才每年提領目標金額"></div>
+      <div class="f"><label>試算年數</label><input id="years" type="number" value="20" min="1" max="30" onchange="rebuildAllRatioGrids();recalc()"></div>
+    </div>
+    <div class="sg G">
+      <h4>年份與匯率</h4>
+      <div class="f"><label>美元匯率 (TWD/USD)</label><input id="fx" type="number" value="30" step="0.5"></div>
+      <div class="f"><label>起始民國年</label><input id="rocStart" type="number" value="115"></div>
+    </div>
+    <div class="sg P">
+      <h4>操作</h4>
+      <div class="f"><label>報告模式</label><select id="reportMode"><option value="advisor">顧問試算</option><option value="client">客戶展示</option></select></div>
+
+```
+</div>
+```
+
+  </div>
+  <div class="btn-row">
+    <button class="btn-calc" onclick="recalc()">▶ 重新試算</button>
+    <button class="btn-add" onclick="addPolicy()">＋新增保單</button>
+    <button class="btn-rst" onclick="resetDefault()">↺ 預設三保單</button>
+  </div>
+</div>
+
+<div class="relay-panel edit-only">
+  <div class="panel-title purple">📄 保單資料輸入（可新增 / 刪除 / 固定表 / 利率推估）</div>
+  <div id="policyList" class="policy-list"></div>
+</div>
+
+<div class="advisor-panel">
+  <div class="panel-title purple">🧭 顧問說明區（可手動填寫）</div>
+  <div class="advisor-grid">
+    <div class="advisor-card">
+      <h4>現況判讀</h4>
+      <div class="f edit-only"><textarea id="summaryStatusInput" placeholder="請輸入現況判讀"></textarea></div>
+      <p id="summaryStatus"></p>
+    </div>
+    <div class="advisor-card">
+      <h4>策略結構說明</h4>
+      <div class="f edit-only"><textarea id="summaryStrategyInput" placeholder="請輸入 A→B→C 或多保單接力策略說明"></textarea></div>
+      <p id="summaryStrategy"></p>
+    </div>
+    <div class="advisor-card">
+      <h4>顧問結論</h4>
+      <div class="f edit-only"><textarea id="summaryAdviceInput" placeholder="請輸入顧問結論"></textarea></div>
+      <p id="summaryAdvice"></p>
+    </div>
+    <div class="advisor-card">
+      <h4>風險提醒</h4>
+      <div class="f edit-only"><textarea id="summaryRiskInput" placeholder="請輸入風險提醒"></textarea></div>
+      <p id="summaryRisk"></p>
+    </div>
+  </div>
+</div>
+
+<div class="lump-panel edit-only">
+  <div class="panel-title" style="color:var(--C)">💰 單筆大額提領設定（當年度特定保單一次領出）</div>
+  <div style="font-size:11px;color:var(--muted);font-weight:500;line-height:1.7;margin-bottom:8px">
+    可設定「哪一年、從哪張保單、領多少 USD」的單筆提領。這筆金額會在當年額外扣除，不影響定期領回試算。例如：第3年從萬事利達一次領 USD 5,000 作為房貸。
+  </div>
+  <div class="lump-grid" id="lumpGrid"></div>
+  <button class="btn-small" style="margin-top:10px;background:var(--C)" onclick="addLump()">＋新增單筆提領</button>
+</div>
+<div class="note-bar">
+  <strong>計算邏輯：</strong>
+  每張保單都可設定「開始承接年、提領順位、計算模式、官方解約金 / 期初本金表、年度利息 / 增值金表」。官方表會直接帶入各年度期初本金；年度增值表若有填，會優先使用。沒有年度增值表時，系統才用下一年度官方表差額或利率推估。
+</div>
+
+<div class="sec">逐年現金流試算</div>
+<div class="tbl-wrap">
+<table>
+  <thead id="thead"></thead>
+  <tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="sec">視覺化圖表</div>
+<div class="charts">
+  <div class="chart-box">
+    <h3>各保單期末餘額走勢（USD）</h3>
+    <canvas id="chartPV" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>年度領回來源 vs 目標 TWD</h3>
+    <canvas id="chartWD" height="220"></canvas>
+  </div>
+</div>
+
+<div class="footer">
+  <span>本資料為業務規劃試算，不構成保險或投資建議。實際給付以各保單條款為準。</span>
+  <span>多保單整合試算 · 陳志強 83歲</span>
+</div>
+
+</div>
+
+<script>
+let chartPV=null, chartWD=null;
+let policySeq=0;
+const colors=[
+  ['#0a5c4a','rgba(10,92,74,.55)'],
+  ['#0f3d7a','rgba(15,61,122,.55)'],
+  ['#6e3f00','rgba(110,63,0,.55)'],
+  ['#5a2d8a','rgba(90,45,138,.55)'],
+  ['#7a5000','rgba(122,80,0,.55)'],
+  ['#455a64','rgba(69,90,100,.55)']
+];
+
+function setToday(){
+  const d=new Date();
+  document.getElementById('today').textContent=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+function syncHeader(){
+  const n=document.getElementById('clientName').value||'客製報告';
+  const age=document.getElementById('clientAge').value||'';
+  document.getElementById('titleName').textContent=n;
+  document.getElementById('clientMeta').textContent=age?`現齡 ${age} 歲｜多保單現金流規劃`:'多保單現金流規劃';
+}
+function toggleClientMode(){
+  const page = document.getElementById('page');
+  const btn = document.getElementById('modeBtn');
+  const text = document.getElementById('modeText');
+  const inline = document.getElementById('modeInline');
+
+  const isClient = page.classList.contains('client-mode');
+
+  if(isClient){
+    page.classList.remove('client-mode');
+    if(text) text.textContent = '顧問模式';
+    if(inline) inline.textContent = '顧問模式';
+    if(btn) btn.textContent = '切換客戶模式';
+  }else{
+    page.classList.add('client-mode');
+    if(text) text.textContent = '客戶模式';
+    if(inline) inline.textContent = '客戶模式';
+    if(btn) btn.textContent = '切換回顧問模式';
+  }
+}
+function parseTable(txt){
+  return (txt||'').split(/[,，\n\s]+/).map(x=>Number(String(x).replace(/,/g,''))).filter(x=>!isNaN(x)&&x>=0);
+}
+function addPolicy(data={}){
+  const id=policySeq++;
+  const d=Object.assign({
+    name:`保單 ${id+1}`, company:'', no:'', start:10000, rate:4.2, mode:'rate',
+    fixed:'', growth:'', startYear:1, priority:id+1, canPrincipal:'1', floor:0, cap:0
+  },data);
+  const tone=id%4;
+  const div=document.createElement('div');
+  div.className=`policy-card tone${tone}`;
+  div.id=`policy_${id}`;
+  div.innerHTML=`
+    <div class="policy-head">
+      <div>
+        <h4 id="policyTitle_${id}">${d.name}</h4>
+        <small id="policySub_${id}">${d.company||'保險公司'} ${d.no||''}</small>
+      </div>
+      <button class="btn-del" onclick="removePolicy(${id})">刪除</button>
+    </div>
+    <div class="policy-grid">
+      <div>
+        <div class="f"><label>保單名稱</label><input id="p_name_${id}" value="${d.name}" oninput="updatePolicyTitle(${id})"></div>
+        <div class="f"><label>保險公司</label><input id="p_company_${id}" value="${d.company}" oninput="updatePolicyTitle(${id})"></div>
+        <div class="f"><label>保單號碼</label><input id="p_no_${id}" value="${d.no}" oninput="updatePolicyTitle(${id})"></div>
+      </div>
+      <div>
+        <div class="f"><label>目前本金 / 解約金 USD</label><input id="p_start_${id}" type="number" value="${d.start}"></div>
+        <div class="f"><label>利率 / 後段增值率 %</label><input id="p_rate_${id}" type="number" value="${d.rate}" step="0.05"></div>
+        <div class="f"><label>本金下限 USD</label><input id="p_floor_${id}" type="number" value="${d.floor}"></div>
+      </div>
+      <div>
+        <div class="f"><label>計算模式</label>
+          <select id="p_mode_${id}" onchange="toggleFixed(${id})">
+            <option value="rate" ${d.mode==='rate'?'selected':''}>利率推估（不使用官方表）</option>
+            <option value="table" ${d.mode==='table'?'selected':''}>官方解約金表（完全照表）</option>
+            <option value="hybrid" ${d.mode==='hybrid'?'selected':''}>官方表＋後段利率</option>
+          </select>
+        </div>
+        <div class="f"><label>開始承接年</label><input id="p_startYear_${id}" type="number" value="${d.startYear}" min="1"></div>
+        <div class="f"><label>提領順位</label><input id="p_priority_${id}" type="number" value="${d.priority}" min="1"></div>
+      </div>
+      <div>
+        <div class="f"><label>是否可動本金</label>
+          <select id="p_canPrincipal_${id}">
+            <option value="1" ${d.canPrincipal==='1'?'selected':''}>可動本金</option>
+            <option value="0" ${d.canPrincipal==='0'?'selected':''}>只領利息 / 增值</option>
+          </select>
+        </div>
+        <div class="f"><label>本金動用上限 USD（0=不限）</label><input id="p_cap_${id}" type="number" value="${d.cap}"></div>
+        <div class="fixed-box" id="fixedBox_${id}">
+          <div class="f"><label>官方解約金 / 期初本金表（每年期初值；貼上官方表即可）</label><textarea id="p_fixed_${id}">${d.fixed}</textarea></div>
+
+```
+      <div class="f"><label>年度利息 / 增值金表（可選；逐年填寫，優先於利率推估）</label><textarea id="p_growth_${id}">${d.growth||''}</textarea></div>
+    </div>
+    <div class="help">每張保單都可填官方解約金 / 期初本金表，也可另外填年度利息 / 增值金表。若有年度增值表，系統優先用增值表；沒有才用官方表差額或利率推估。</div>
+  </div>
+</div>
+<div class="ratio-section">
+  <div class="ratio-section-title">
+    📊 每年提領比例設定
+    <div class="ratio-mode-toggle">
+      <label><input type="radio" name="ratio_mode_${id}" value="priority" checked onchange="toggleRatioMode(${id})"> 順位制（依順位填滿）</label>
+      <label><input type="radio" name="ratio_mode_${id}" value="ratio" onchange="toggleRatioMode(${id})"> 比例制（每年自訂 %）</label>
+    </div>
+  </div>
+  <div id="ratioBox_${id}" style="display:none">
+    <div style="font-size:10.5px;color:var(--muted);font-weight:500;margin-bottom:6px;line-height:1.7">
+      每年輸入此保單應承擔的比例（%）。未填寫 = 沿用上一年。若所有保單比例合計未達100%，缺口依順位自動補滿。
+    </div>
+    <div class="ratio-grid" id="ratioGrid_${id}"></div>
+    <button class="btn-small" style="margin-top:8px;font-size:11px;padding:6px 12px" onclick="fillRatioEvenly(${id})">平均分配重填</button>
+  </div>
+</div>`;
+```
+
+document.getElementById(‘policyList’).appendChild(div);
+toggleFixed(id);
+buildRatioGrid(id);
+recalc();
+}
+function updatePolicyTitle(id){
+const n=document.getElementById(`p_name_${id}`).value||`保單 ${id+1}`;
+const c=document.getElementById(`p_company_${id}`).value||‘保險公司’;
+const no=document.getElementById(`p_no_${id}`).value||’’;
+document.getElementById(`policyTitle_${id}`).textContent=n;
+document.getElementById(`policySub_${id}`).textContent=`${c} ${no}`;
+}
+function toggleFixed(id){
+const mode=document.getElementById(`p_mode_${id}`).value;
+const card=document.getElementById(`policy_${id}`);
+if(mode===‘table’||mode===‘hybrid’) card.classList.add(‘use-table’);
+else card.classList.remove(‘use-table’);
+}
+function removePolicy(id){
+const el=document.getElementById(`policy_${id}`);
+if(el) el.remove();
+recalc();
+}
+function getPolicies(){
+return […document.querySelectorAll(’.policy-card’)].map(card=>{
+const id=card.id.replace(‘policy_’,’’);
+return {
+id,
+name:document.getElementById(`p_name_${id}`).value||`保單 ${id}`,
+company:document.getElementById(`p_company_${id}`).value||’’,
+no:document.getElementById(`p_no_${id}`).value||’’,
+start:+document.getElementById(`p_start_${id}`).value||0,
+rate:(+document.getElementById(`p_rate_${id}`).value||0)/100,
+mode:document.getElementById(`p_mode_${id}`).value,
+fixed:parseTable(document.getElementById(`p_fixed_${id}`).value),
+growthTable:parseTable(document.getElementById(`p_growth_${id}`).value),
+startYear:+document.getElementById(`p_startYear_${id}`).value||1,
+priority:+document.getElementById(`p_priority_${id}`).value||1,
+canPrincipal:document.getElementById(`p_canPrincipal_${id}`).value===‘1’,
+floor:+document.getElementById(`p_floor_${id}`).value||0,
+cap:+document.getElementById(`p_cap_${id}`).value||0,
+capUsed:0,
+principalTaken:0,
+balance:+document.getElementById(`p_start_${id}`).value||0
+};
+}).sort((a,b)=>a.priority-b.priority);
+}
+function hasOfficialTable(policy, yearIndex){
+return (policy.mode===‘table’||policy.mode===‘hybrid’) && policy.fixed && policy.fixed.length && yearIndex < policy.fixed.length;
+}
+
+function getPolicyStart(policy, yearIndex){
+if(hasOfficialTable(policy, yearIndex)){
+return Math.max(0, policy.fixed[yearIndex] - policy.principalTaken);
+}
+return Math.max(0, policy.balance);
+}
+
+function getPolicyBaseStart(policy, yearIndex, actualStart){
+if(hasOfficialTable(policy, yearIndex)){
+return policy.fixed[yearIndex];
+}
+return actualStart;
+}
+
+function plannedGrowth(policy, yearIndex, baseStart, actualStart){
+let baseGrowth = 0;
+
+if(policy.growthTable && policy.growthTable.length && yearIndex < policy.growthTable.length){
+baseGrowth = policy.growthTable[yearIndex];
+}else if((policy.mode===‘table’||policy.mode===‘hybrid’) && policy.fixed.length && yearIndex + 1 < policy.fixed.length){
+baseGrowth = Math.max(0, policy.fixed[yearIndex + 1] - policy.fixed[yearIndex]);
+}else{
+baseGrowth = actualStart * policy.rate;
+}
+
+if(baseStart > 0 && actualStart < baseStart){
+baseGrowth = baseGrowth * (actualStart / baseStart);
+}
+
+if(actualStart <= 0) return 0;
+return Math.max(0, baseGrowth);
+}
+// ── Ratio helpers ─────────────────────────────────────────────────────
+function toggleRatioMode(id){
+const mode = document.querySelector(`input[name="ratio_mode_${id}"]:checked`)?.value||‘priority’;
+const box = document.getElementById(`ratioBox_${id}`);
+if(box) box.style.display = mode===‘ratio’ ? ‘block’ : ‘none’;
+recalc();
+}
+
+function buildRatioGrid(id){
+const years = +document.getElementById(‘years’).value||12;
+const grid = document.getElementById(`ratioGrid_${id}`);
+if(!grid) return;
+// Preserve existing values
+const existing = {};
+grid.querySelectorAll(’.ratio-row’).forEach(row=>{
+const yr = +row.dataset.yr;
+const inp = row.querySelector(‘input’);
+if(inp && inp.value!==’’) existing[yr] = inp.value;
+});
+grid.innerHTML = ‘’;
+for(let y=1;y<=years;y++){
+const row = document.createElement(‘div’);
+row.className = ‘ratio-row’;
+row.dataset.yr = y;
+const hasVal = existing[y]!==undefined && existing[y]!==’’;
+row.innerHTML = `<label>第${y}年</label><input type="number" min="0" max="100" step="1" placeholder="沿用" value="${hasVal?existing[y]:''}" title="${hasVal?'':'未填寫將沿用上一年比例'}" onchange="recalc()"><span class="pct">%</span>`;
+grid.appendChild(row);
+}
+}
+
+function fillRatioEvenly(id){
+const grid = document.getElementById(`ratioGrid_${id}`);
+if(!grid) return;
+// Count active policies using ratio mode
+const activePolicies = […document.querySelectorAll(’.policy-card’)].filter(c=>{
+const pid = c.id.replace(‘policy_’,’’);
+return document.querySelector(`input[name="ratio_mode_${pid}"]:checked`)?.value===‘ratio’;
+});
+const share = activePolicies.length>0 ? Math.round(100/activePolicies.length) : 100;
+grid.querySelectorAll(‘input’).forEach(inp=>{ inp.value=share; });
+recalc();
+}
+
+function getRatioForPolicy(id, yearIndex){
+// yearIndex is 0-based; year label is 1-based
+const mode = document.querySelector(`input[name="ratio_mode_${id}"]:checked`)?.value||‘priority’;
+if(mode!==‘ratio’) return null; // null = use priority mode
+const grid = document.getElementById(`ratioGrid_${id}`);
+if(!grid) return null;
+const rows = grid.querySelectorAll(’.ratio-row’);
+let lastVal = null;
+for(let r of rows){
+const yr = +r.dataset.yr;
+const inp = r.querySelector(‘input’);
+const v = inp.value!==’’ ? +inp.value : null;
+if(v!==null) lastVal = v;
+if(yr === yearIndex+1) return lastVal; // carry-forward
+}
+return lastVal;
+}
+
+// Rebuild ratio grids when year count changes
+function rebuildAllRatioGrids(){
+document.querySelectorAll(’.policy-card’).forEach(card=>{
+const id = card.id.replace(‘policy_’,’’);
+buildRatioGrid(id);
+});
+}
+
+function recalc(){
+syncHeader();
+const FX=+document.getElementById(‘fx’).value||31;
+const targetTWD=+document.getElementById(‘targetTWD’).value||120000;
+const targetUSD=targetTWD/FX;
+const years=+document.getElementById(‘years’).value||12;
+const rocStart=+document.getElementById(‘rocStart’).value||115;
+const ageStart=+document.getElementById(‘clientAge’).value||0;
+const policies=getPolicies();
+const rows=[];
+
+const regularStartYear = +document.getElementById(‘regularStartYear’)?.value||1;
+for(let i=0;i<years;i++){
+// 若未到定期提領起始年，定期提領金額為0（只有單筆提領）
+const isRegularYear = (i+1) >= regularStartYear;
+let need = isRegularYear ? targetUSD : 0;
+const items=[];
+let totalAsset=0,totalGrowth=0,totalWithdraw=0;
+
+```
+// ── Step 1: compute each policy's start/growth ──
+const policyData = policies.map(p=>{
+  const start = getPolicyStart(p, i);
+  const baseStart = getPolicyBaseStart(p, i, start);
+  const growth = plannedGrowth(p, i, baseStart, start);
+  return {p, start, baseStart, growth};
+});
+
+// ── Step 2: determine ratio-mode allocation ──
+// For ratio-mode policies, reserve their share of targetUSD first
+// For priority-mode policies, fill remaining need in order
+const ratioAlloc = {}; // policyId -> allocated USD
+let ratioTotal = 0;
+for(const {p} of policyData){
+  if((i+1) < p.startYear) continue;
+  const r = getRatioForPolicy(p.id, i);
+  if(r !== null){
+    const alloc = targetUSD * (r/100);
+    ratioAlloc[p.id] = alloc;
+    ratioTotal += alloc;
+  }
+}
+// Remaining need after ratio allocations
+let priorityNeed = Math.max(0, targetUSD - ratioTotal);
+
+// ── Step 3: process each policy ──
+for(const {p, start, baseStart, growth} of policyData){
+  let takeGrowth=0, takePrincipal=0;
+
+  if((i+1) >= p.startYear){
+    const ratioMode = getRatioForPolicy(p.id, i) !== null;
+    let myNeed;
+
+    if(ratioMode){
+      // Use ratio allocation
+      myNeed = ratioAlloc[p.id] || 0;
+    } else {
+      // Priority mode: take from remaining need
+      myNeed = priorityNeed;
+    }
+
+    takeGrowth = Math.min(growth, myNeed);
+    myNeed -= takeGrowth;
+
+    if(myNeed > 0 && p.canPrincipal){
+      const capLeft = p.cap>0 ? Math.max(0,p.cap-p.capUsed) : Infinity;
+      const available = Math.max(0, start-p.floor);
+      takePrincipal = Math.min(myNeed, available, capLeft);
+      myNeed -= takePrincipal;
+      p.capUsed += takePrincipal;
+      p.principalTaken += takePrincipal;
+    }
+
+    if(!ratioMode){
+      const actualTaken = takeGrowth + takePrincipal;
+      priorityNeed = Math.max(0, priorityNeed - actualTaken);
+    }
+  }
+
+  const withdraw = takeGrowth + takePrincipal;
+  const end = Math.max(0, start + growth - withdraw);
+  p.balance = end;
+  totalAsset += end;
+  totalGrowth += growth;
+  totalWithdraw += withdraw;
+
+  // Compute actual % of target this policy contributed
+  const pctOfTarget = targetUSD > 0 ? (withdraw / targetUSD * 100) : 0;
+  items.push({name:p.name, id:p.id, start, growth, withdraw, end, takeGrowth, takePrincipal, baseStart, pctOfTarget});
+}
+
+// Update need for shortfall reporting
+need = Math.max(0, targetUSD - totalWithdraw);
+
+// ── Lump-sum withdrawals this year ──
+const lumpItems = getLumpsForYear(i+1, policies);
+let lumpTotalUSD = 0;
+for(const lp of lumpItems){
+  const pol = policies.find(p=>p.id===lp.policyId);
+  if(pol){
+    const take = Math.min(lp.amount, pol.balance);
+    pol.balance = Math.max(0, pol.balance - take);
+    lumpTotalUSD += take;
+    // Also subtract from totalAsset
+    totalAsset = Math.max(0, totalAsset - take);
+    lp.actual = take;
+  }
+}
+
+rows.push({
+  year:i+1,
+  roc:rocStart+i,
+  ad:rocStart+i+1911,
+  age:ageStart+i,
+  items,
+  totalAsset,
+  totalGrowth,
+  totalWithdraw,
+  totalTWD:Math.round(totalWithdraw*FX),
+  shortfall:need,
+  lumpItems,
+  lumpTotalUSD,
+  lumpTotalTWD:Math.round(lumpTotalUSD*FX),
+  grandTotalUSD: totalWithdraw + lumpTotalUSD,
+  grandTotalTWD: Math.round((totalWithdraw + lumpTotalUSD)*FX)
+});
+```
+
+}
+
+renderSummary(rows,targetTWD);
+renderTable(rows,policies,FX);
+// 稍微延遲讓 DOM layout 穩定後再畫圖
+setTimeout(function(){ renderCharts(rows,policies,targetTWD,FX); }, 50);
+}
+function renderSummary(rows,targetTWD){
+if(!document.getElementById(‘summaryStatusInput’).value.trim()){
+const first=rows[0]?.totalAsset||0;
+const last=rows[rows.length-1]?.totalAsset||0;
+document.getElementById(‘summaryStatusInput’).value=`本次試算以年領 ${targetTWD.toLocaleString()} TWD 為目標。\n整體期末資產由第1年約 ${Math.round(first).toLocaleString()} USD，推估至最後一年約 ${Math.round(last).toLocaleString()} USD。`;
+}
+if(!document.getElementById(‘summaryStrategyInput’).value.trim()){
+document.getElementById(‘summaryStrategyInput’).value=`此模型依照每張保單設定的「開始承接年」與「提領順位」進行接力。前段由順位較前的保單支應，中段再由後續保單承接，避免所有保單同時被動用。`;
+}
+applyManualSummary();
+}
+function applyManualSummary(){
+const map=[
+[‘summaryStatusInput’,‘summaryStatus’],
+[‘summaryStrategyInput’,‘summaryStrategy’],
+[‘summaryAdviceInput’,‘summaryAdvice’],
+[‘summaryRiskInput’,‘summaryRisk’]
+];
+map.forEach(([i,o])=>{
+document.getElementById(o).innerHTML=document.getElementById(i).value.trim().replace(/\n/g,’<br>’);
+});
+}
+function renderTable(rows,policies,FX){
+let h=`<tr><th rowspan="2" style="text-align:left;color:#b8b0a0;min-width:88px">年度<br>年齡</th>`;
+policies.forEach((p,idx)=>h+=`<th colspan="5" class="group-start">${p.name}</th>`);
+h+=`<th colspan="3" class="total-start">整合合計</th><th rowspan="2">狀態</th></tr><tr>`;
+policies.forEach(()=>h+=`<th class="group-start">期初本金</th><th>年利息/增值</th><th>本年領回</th><th>期末餘額</th><th>實際%</th>`);
+h+=`<th class="total-start">總資產</th><th>定期領USD</th><th>單筆領USD</th><th>合計領TWD</th></tr>`;
+document.getElementById(‘thead’).innerHTML=h;
+
+const tb=document.getElementById(‘tbody’);
+tb.innerHTML=’’;
+rows.forEach((r,idx)=>{
+const tr=document.createElement(‘tr’);
+// 表格底色統一，不用顏色標示
+let html=`<td class="yr-cell">${r.roc}年<br><span style="font-size:10px;color:var(--muted)">${r.ad} ${r.age?`${r.age}歲`:''}</span>${r.shortfall>0.5?`<br><span style="font-size:9px;color:var(--red)">缺 ${Math.round(r.shortfall*FX).toLocaleString()}</span>`:''}</td>`;
+r.items.forEach(it=>{
+const pct = it.pctOfTarget>0 ? it.pctOfTarget.toFixed(1)+’%’ : ‘—’;
+const pctStyle = it.pctOfTarget>0 ? ‘pct-cell’ : ‘pct-cell” style=“color:var(–muted)’;
+html+=`<td class="group-start">${Math.round(it.start).toLocaleString()}</td><td class="ic">＋${Math.round(it.growth).toLocaleString()}</td><td class="wd">${it.withdraw>0?'－'+Math.round(it.withdraw).toLocaleString():'—'}</td><td>${Math.round(it.end).toLocaleString()}</td><td class="${pctStyle}">${pct}</td>`;
+});
+const targetTWD2 = +document.getElementById(‘targetTWD’).value;
+const grandCls = r.grandTotalTWD>=(targetTWD2*0.96)?‘twd-ok’:(r.grandTotalTWD>=(targetTWD2*0.8)?‘twd-ne’:‘twd-sh’);
+// Lump display: each lump shows policy name + amount
+const lumpStr = (r.lumpItems&&r.lumpItems.length>0)
+? r.lumpItems.filter(lp=>lp.actual>0).map(lp=>`💰${lp.name}<br>${Math.round(lp.actual).toLocaleString()}`).join(’ ’)
+: ‘—’;
+const note = r.shortfall>0.5 ? `缺口 ${Math.round(r.shortfall*FX).toLocaleString()}` : (idx>0 && r.totalAsset<rows[idx-1].totalAsset ? ‘資產遞減’ : ‘✓’);
+html+=` <td class="sv-t total-start">${Math.round(r.totalAsset).toLocaleString()}</td> <td class="wd">${Math.round(r.totalWithdraw).toLocaleString()}</td> <td class="lump-cell" style="font-size:10.5px;line-height:1.4">${lumpStr}</td> <td class="${grandCls}" style="font-weight:900">${r.grandTotalTWD.toLocaleString()}</td> <td class="status-note">${note}</td>`;
+tr.innerHTML=html;
+tb.appendChild(tr);
+});
+
+const sumUSD=rows.reduce((s,r)=>s+r.totalWithdraw,0);
+const sumLump=rows.reduce((s,r)=>s+(r.lumpTotalUSD||0),0);
+const sumGrand=rows.reduce((s,r)=>s+(r.grandTotalUSD||0),0);
+const last=rows[rows.length-1];
+const trG=document.createElement(‘tr’);
+trG.className=‘grand’;
+trG.innerHTML=`<td colspan="${1+policies.length*5}" style="text-align:right;font-family:'Noto Sans TC',sans-serif;font-size:10.5px;letter-spacing:.06em">${rows.length} 年累計</td> <td>${Math.round(last.totalAsset).toLocaleString()}</td> <td>${Math.round(sumUSD).toLocaleString()}</td> <td style="color:#f8d870">${Math.round(sumLump).toLocaleString()}</td> <td style="color:#ffc840;font-size:13px">${Math.round(sumGrand*FX).toLocaleString()}</td> <td></td>`;
+tb.appendChild(trG);
+}
+// ── 平滑解約金數列（移除明顯異常低點）──
+function smoothSeries(arr){
+if(!arr||arr.length===0) return arr;
+const out = […arr];
+for(let i=1;i<out.length-1;i++){
+const prev=out[i-1]||0, cur=out[i]||0, next=out[i+1]||0;
+// 如果當前值比前後都低超過40%，視為異常，用前後平均補
+if(cur < prev*0.6 && cur < next*0.6 && prev>0 && next>0){
+out[i] = Math.round((prev+next)/2);
+}
+}
+return out;
+}
+
+let _pendingChartData = null;
+function renderCharts(rows,policies,targetTWD,FX){
+_pendingChartData = {rows,policies,targetTWD,FX};
+_doRenderCharts({rows,policies,targetTWD,FX});
+}
+
+function _doRenderCharts({rows,policies,targetTWD,FX}){
+const labels=rows.map(r=>`${r.roc}`);
+if(chartPV && chartPV.destroy){ try{chartPV.destroy();}catch(e){} } chartPV=null;
+if(chartWD && chartWD.destroy){ try{chartWD.destroy();}catch(e){} } chartWD=null;
+
+const pvCanvas = document.getElementById(‘chartPV’);
+const wdCanvas = document.getElementById(‘chartWD’);
+if(!pvCanvas||!wdCanvas) return;
+
+const commonOpts = {
+responsive:true,
+maintainAspectRatio:false,
+animation:{duration:400},
+plugins:{
+legend:{labels:{font:{size:11},boxWidth:12,padding:10}},
+tooltip:{mode:‘index’,intersect:false}
+},
+scales:{
+x:{ticks:{maxRotation:0,font:{size:10}},grid:{display:false}},
+y:{ticks:{font:{size:10}},grid:{color:‘rgba(0,0,0,0.05)’}}
+}
+};
+
+chartPV=new Chart(pvCanvas,{
+type:‘line’,
+data:{labels,datasets:policies.map((p,i)=>({
+label:p.name,
+data:smoothSeries(rows.map(r=>Math.round(r.items[i]?.end||0))),
+borderColor:colors[i%colors.length][0],
+backgroundColor:colors[i%colors.length][1].replace(’.55’,’.10’),
+pointRadius:3,borderWidth:2
+}))},
+options:{…commonOpts}
+});
+
+chartWD=new Chart(wdCanvas,{
+type:‘bar’,
+data:{labels,datasets:[
+…policies.map((p,i)=>({
+label:p.name,
+data:rows.map(r=>Math.round((r.items[i]?.withdraw||0)*FX)),
+backgroundColor:colors[i%colors.length][1],
+borderColor:colors[i%colors.length][0],
+borderWidth:1,borderRadius:2,stack:‘s’
+})),
+{label:‘目標 TWD’,data:rows.map(()=>targetTWD),type:‘line’,
+borderColor:’#b83030’,borderDash:[5,4],pointRadius:0,borderWidth:2,fill:false}
+]},
+options:{…commonOpts,
+scales:{
+x:{…commonOpts.scales.x,stacked:true},
+y:{…commonOpts.scales.y,stacked:true}
+}
+}
+});
+}
+
+// Chart is built-in, no CDN load listener needed
+
+// ── Lump-sum helpers ──────────────────────────────────────────
+let lumpSeq = 0;
+function addLump(data={}){
+const id = lumpSeq++;
+const d = Object.assign({year:1, policyNo:’’, amount:0, note:’’}, data);
+const grid = document.getElementById(‘lumpGrid’);
+const div = document.createElement(‘div’);
+div.className = ‘lump-row’;
+div.id = `lump_${id}`;
+
+// Build policy options from current policies
+const pols = […document.querySelectorAll(’.policy-card’)].map(c=>{
+const pid = c.id.replace(‘policy_’,’’);
+const nm = document.getElementById(`p_name_${pid}`)?.value||`保單${pid}`;
+const no = document.getElementById(`p_no_${pid}`)?.value||’’;
+return {pid, nm, no};
+});
+const opts = pols.map(p=>`<option value="${p.pid}" ${p.no===d.policyNo||p.pid===d.policyNo?'selected':''}>${p.nm}</option>`).join(’’);
+
+div.innerHTML = `<label>第</label> <input type="number" id="lump_yr_${id}" value="${d.year}" min="1" style="width:48px" onchange="recalc()"> <label>年</label> <select id="lump_pol_${id}" style="flex:2;min-width:100px" onchange="recalc()">${opts}</select> <label>額度 USD</label> <input type="number" id="lump_amt_${id}" value="${d.amount}" min="0" onchange="recalc()"> <input type="text" id="lump_note_${id}" value="${d.note}" placeholder="用途備註" style="flex:2;min-width:80px" onchange="recalc()"> <button class="lump-del" onclick="removeLump(${id})">✕</button>`;
+grid.appendChild(div);
+recalc();
+}
+
+function removeLump(id){
+const el = document.getElementById(`lump_${id}`);
+if(el) el.remove();
+recalc();
+}
+
+function getLumpsForYear(yearNum, policies){
+const result = [];
+document.querySelectorAll(’.lump-row’).forEach(row=>{
+const id = row.id.replace(‘lump_’,’’);
+const yr = +document.getElementById(`lump_yr_${id}`)?.value||0;
+if(yr !== yearNum) return;
+const polId = document.getElementById(`lump_pol_${id}`)?.value||’’;
+const amt = +document.getElementById(`lump_amt_${id}`)?.value||0;
+const note = document.getElementById(`lump_note_${id}`)?.value||’’;
+const pol = policies.find(p=>p.id===polId);
+if(!pol || amt<=0) return;
+result.push({policyId:polId, name:pol.name, amount:amt, note});
+});
+return result;
+}
+
+// ── Persist: save / load / export ────────────────────────────
+function collectState(){
+const policies = […document.querySelectorAll(’.policy-card’)].map(c=>{
+const id = c.id.replace(‘policy_’,’’);
+return {
+name:document.getElementById(`p_name_${id}`)?.value||’’,
+company:document.getElementById(`p_company_${id}`)?.value||’’,
+no:document.getElementById(`p_no_${id}`)?.value||’’,
+start:document.getElementById(`p_start_${id}`)?.value||’’,
+rate:document.getElementById(`p_rate_${id}`)?.value||’’,
+floor:document.getElementById(`p_floor_${id}`)?.value||’’,
+mode:document.getElementById(`p_mode_${id}`)?.value||’’,
+startYear:document.getElementById(`p_startYear_${id}`)?.value||’’,
+priority:document.getElementById(`p_priority_${id}`)?.value||’’,
+canPrincipal:document.getElementById(`p_canPrincipal_${id}`)?.value||’’,
+cap:document.getElementById(`p_cap_${id}`)?.value||’’,
+fixed:document.getElementById(`p_fixed_${id}`)?.value||’’,
+growth:document.getElementById(`p_growth_${id}`)?.value||’’
+};
+});
+const lumps = […document.querySelectorAll(’.lump-row’)].map(row=>{
+const id = row.id.replace(‘lump_’,’’);
+return {
+year:document.getElementById(`lump_yr_${id}`)?.value||’’,
+policyNo:document.getElementById(`lump_pol_${id}`)?.value||’’,
+amount:document.getElementById(`lump_amt_${id}`)?.value||’’,
+note:document.getElementById(`lump_note_${id}`)?.value||’’
+};
+});
+return {
+clientName:document.getElementById(‘clientName’)?.value||’’,
+clientAge:document.getElementById(‘clientAge’)?.value||’’,
+targetTWD:document.getElementById(‘targetTWD’)?.value||’’,
+regularStartYear:document.getElementById(‘regularStartYear’)?.value||‘1’,
+years:document.getElementById(‘years’)?.value||’’,
+fx:document.getElementById(‘fx’)?.value||’’,
+rocStart:document.getElementById(‘rocStart’)?.value||’’,
+summaryStatus:document.getElementById(‘summaryStatusInput’)?.value||’’,
+summaryStrategy:document.getElementById(‘summaryStrategyInput’)?.value||’’,
+summaryAdvice:document.getElementById(‘summaryAdviceInput’)?.value||’’,
+summaryRisk:document.getElementById(‘summaryRiskInput’)?.value||’’,
+policies, lumps,
+savedAt: new Date().toLocaleString(‘zh-TW’)
+};
+}
+
+// ── 匯出設定檔 (.json) ──
+function saveAsJson(){
+try{
+const state = collectState();
+const json = JSON.stringify(state, null, 2);
+const blob = new Blob([json], {type:‘application/json;charset=utf-8’});
+const url = URL.createObjectURL(blob);
+const a = document.createElement(‘a’);
+a.href = url;
+const name = (document.getElementById(‘clientName’)?.value||‘保單設定’).replace(/\s/g,’_’);
+a.download = `${name}_設定_${new Date().toISOString().slice(0,10)}.json`;
+// Try download — may be blocked in Claude.ai sandbox
+try {
+document.body.appendChild(a);
+a.click();
+setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+} catch(e) {
+URL.revokeObjectURL(url);
+// Fallback: show data in new window
+const w = window.open(’’,’_blank’);
+if(w){ w.document.write(’<pre>’+JSON.stringify(JSON.parse(json),null,2)+’</pre>’); w.document.close(); }
+}
+const el = document.getElementById(‘saveStatus’);
+el.textContent = ‘✅ 設定檔已下載，請保存到手機/電腦’;
+el.style.color = ‘var(–green)’;
+setTimeout(()=>el.textContent=’’, 5000);
+}catch(e){
+alert(‘匯出失敗：’+e.message);
+}
+}
+
+// ── 讀取設定檔 (.json) ──
+function loadFromJson(event){
+const file = event.target.files[0];
+if(!file) return;
+const reader = new FileReader();
+reader.onload = function(e){
+try{
+const state = JSON.parse(e.target.result);
+if(!confirm(`讀取「${state.clientName||'未知客戶'}」的設定（儲存於 ${state.savedAt||'未知時間'}）？\n目前設定將被取代。`)) return;
+restoreState(state);
+const el = document.getElementById(‘saveStatus’);
+el.textContent = `✅ 已讀取設定檔（${state.savedAt||''}）`;
+el.style.color = ‘var(–B)’;
+setTimeout(()=>el.textContent=’’, 5000);
+}catch(err){
+alert(‘讀取失敗，請確認是正確的設定檔：’+err.message);
+}
+};
+reader.readAsText(file, ‘utf-8’);
+// Reset file input so same file can be re-selected
+event.target.value = ‘’;
+}
+
+// 舊函數保留相容性
+function saveToLocal(){ saveAsJson(); }
+function loadFromLocal(){ alert(‘請使用「讀取設定檔」按鈕選擇之前下載的 .json 檔’); }
+
+function restoreState(state){
+if(state.clientName) document.getElementById(‘clientName’).value = state.clientName;
+if(state.clientAge)  document.getElementById(‘clientAge’).value  = state.clientAge;
+if(state.targetTWD)       document.getElementById(‘targetTWD’).value        = state.targetTWD;
+if(state.regularStartYear && document.getElementById(‘regularStartYear’))
+document.getElementById(‘regularStartYear’).value = state.regularStartYear;
+if(state.years)      document.getElementById(‘years’).value      = state.years;
+if(state.fx)         document.getElementById(‘fx’).value         = state.fx;
+if(state.rocStart)   document.getElementById(‘rocStart’).value   = state.rocStart;
+if(state.summaryStatus)   document.getElementById(‘summaryStatusInput’).value   = state.summaryStatus;
+if(state.summaryStrategy) document.getElementById(‘summaryStrategyInput’).value = state.summaryStrategy;
+if(state.summaryAdvice)   document.getElementById(‘summaryAdviceInput’).value   = state.summaryAdvice;
+if(state.summaryRisk)     document.getElementById(‘summaryRiskInput’).value     = state.summaryRisk;
+
+document.getElementById(‘policyList’).innerHTML = ‘’;
+policySeq = 0;
+(state.policies||[]).forEach(p => addPolicy(p));
+
+document.getElementById(‘lumpGrid’).innerHTML = ‘’;
+lumpSeq = 0;
+(state.lumps||[]).forEach(l => addLump(l));
+
+syncHeader();
+setTimeout(()=>{
+rebuildAllRatioGrids();
+recalc();
+}, 100);
+}
+
+function printPage(){
+// In Claude.ai artifact iframe, window.print() may be blocked.
+// Try multiple approaches.
+try {
+// First: try direct print
+if(window.self === window.top){
+window.print();
+} else {
+// We’re in an iframe — open a new window with current HTML and print
+const html = document.documentElement.outerHTML;
+const win = window.open(’’,’_blank’);
+if(win){
+win.document.write(html);
+win.document.close();
+win.focus();
+setTimeout(()=>{ win.print(); }, 800);
+} else {
+// Fallback: export HTML instead
+alert(‘列印功能在此環境受限。\n\n請改用「匯出 HTML 檔案」，下載後在瀏覽器開啟，再按 Cmd+P（Mac）或 Ctrl+P（Windows）列印/存成 PDF。’);
+}
+}
+} catch(e) {
+alert(‘列印功能在此環境受限。\n\n請改用「匯出 HTML 檔案」，下載後在瀏覽器開啟，再按 Cmd+P 或 Ctrl+P 列印/存成 PDF。’);
+}
+}
+
+function exportHTML(){
+// Auto-save first, then export current page as standalone HTML
+const state = collectState();
+const stateJson = JSON.stringify(state).replace(/</g,’\u003c’);
+const blob = new Blob([
+document.documentElement.outerHTML.replace(
+‘</body>’,
+`<script> // Auto-restore on load window.addEventListener('DOMContentLoaded',function(){ try{ const s=${stateJson}; // inject into localStorage localStorage.setItem('policyApp_state', JSON.stringify(s)); restoreState(s); }catch(e){console.error(e);} }); <\/script></body>`
+)
+], {type:‘text/html;charset=utf-8’});
+const url = URL.createObjectURL(blob);
+const a = document.createElement(‘a’);
+a.href = url;
+const rawName = (document.getElementById(‘clientName’)?.value||‘保單試算’);
+const name = rawName.replace(/[\s\u4e00-\u9fff]/g, c => encodeURIComponent(c).replace(/%/g,’’));
+a.download = `policy_${rawName}_${new Date().toISOString().slice(0,10)}.html`;
+try {
+document.body.appendChild(a);
+a.click();
+setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+} catch(e) {
+// Open in new tab as fallback
+window.open(url,’_blank’);
+setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+}
+
+// Auto-save removed (localStorage not available in all environments)
+// Use “匯出設定檔” button to save your work
+
+function resetDefault(){
+document.getElementById(‘policyList’).innerHTML=’’;
+document.getElementById(‘lumpGrid’).innerHTML=’’;
+policySeq=0; lumpSeq=0;
+
+// ═══════════════════════════════════════════════════════════════
+// 陳志強 民國41年10月 現齡83歲
+// 所有保單數字皆為美金(USD)，直接填入
+// 2021/09、2021/11投保者現為保單第4年末
+// 2022/01投保金價美現為第3年末
+// 2025/05投保非常美現為第1年末
+// ═══════════════════════════════════════════════════════════════
+
+// ── 保單1：金價美 FDD 7001355710（全球人壽）──
+// 2022/01投保，躉繳525,390 USD，被保人虛擬名=陳志強
+// 現第3年末，解約金512,039 USD
+// 解約金(B欄，USD)從yr3起(PDF讀取):
+addPolicy({
+name:‘金價美 FDD’,company:‘全球人壽’,no:‘7001355710’,
+start:512039,rate:2.8,mode:‘hybrid’,
+fixed:‘512039,515024,517960,520874,523759,526612,529426,532136,534804,537426,540001,542527,545011,547441,549813,552123’,
+growth:‘0,0,0,0,12361,12739,13127,13937,14791,15691,16159,16638,17129,17632,18149,18679’,
+startYear:1,priority:1,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單2：非常美 FGD 88000792170（全球人壽）──
+// 2025/05投保，躉繳100,450 USD，宣告4.20%，增值回饋=儲存生息
+// 現第1年末，解約金89,653 USD
+// 解約金(B欄，USD)逐年(PDF讀取):
+addPolicy({
+name:‘非常美 FGD’,company:‘全球人壽’,no:‘88000792170’,
+start:89653,rate:4.2,mode:‘hybrid’,
+fixed:‘89653,96731,98025,99343,100684,102030,103367,104795,106266,107787,110000,112513,114120,116402,117380,119031,120694,122368,124053,125747’,
+growth:‘0,0,0,0,0,0,2595,2700,2809,2923,3043,3165,3208,3252,3299,3346,3395,3443’,
+startYear:4,priority:2,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單3：萬事利達 81224035（保誠人壽）被保人：陳怡亘 31歲起 ──
+// 2021/11投保，年繳124,200 USD，現第4年末
+// 解約金(USD)逐年完整資料，從yr4起:
+addPolicy({
+name:‘萬事利達(陳怡亘)’,company:‘保誠人壽’,no:‘81224035’,
+start:35200,rate:3.2,mode:‘hybrid’,
+fixed:‘35200,48435,63078,66074,73117,76317,141051,147617,153645,159842,165523,170938,176092,180987,185657,190100,194317,199906,205369,210406,215179,219574,223962,227983,231790,235476,238842,242719,249978,253222’,
+growth:‘0,13235,14643,2996,7043,3200,64734,6566,6028,6197,5681,5415,5154,4895,4670,4443,4217,5589,5463,5037,4773,4395,4388,4021,3807,3686,3366,3877,7259,3244’,
+startYear:5,priority:3,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單4：萬事利達 81215039（保誠人壽）被保人：陳韋庭 29歲起 ──
+// 2021/09投保，年繳121,080 USD，現第4年末
+addPolicy({
+name:‘萬事利達(陳韋庭)’,company:‘保誠人壽’,no:‘81215039’,
+start:34800,rate:3.2,mode:‘hybrid’,
+fixed:‘34800,47850,62650,65364,71958,75468,137648,142726,147334,151802,156134,159926,163696,196979,170193,173140,175917,17388,200225,209573,214009,218090’,
+growth:‘0,13050,14800,2714,6594,3510,62180,5078,4608,4468,4332,3792,3770,33283,0,2947,2777,0,182837,9348,4436,4081’,
+startYear:6,priority:4,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單5：萬事利達 81224053（保誠人壽）被保人：陳加綺 27歲起 ──
+// 2021/11投保，年繳126,000 USD，現第4年末
+addPolicy({
+name:‘萬事利達(陳加綺)’,company:‘保誠人壽’,no:‘81224053’,
+start:36020,rate:3.2,mode:‘hybrid’,
+fixed:‘36020,67120,74414,77470,143208,149938,156260,162457,168266,176760,179213,184025,188595,193043,197390,202732,207652,212455,216871,220969,224752,228290,231462,234449,237283,240147,242785,245168,247280,249144’,
+growth:‘0,31100,7294,3056,65738,6730,6322,6197,5809,8494,2453,4812,4570,4448,4347,5342,4920,4803,4416,4098,3783,3538,3172,2987,2834,2864,2638,2383,2112,1864’,
+startYear:7,priority:5,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單6：萬事利達 81215001（保誠人壽）被保人：陳志強本人 61歲起 ──
+// 2021/09投保，年繳63,000 USD，繳至81歲，現第4年末
+addPolicy({
+name:‘萬事利達(陳志強本人)’,company:‘保誠人壽’,no:‘81215001’,
+start:23598,rate:3.0,mode:‘hybrid’,
+fixed:‘23598,32348,42026,43344,47082,48532,64555,66718,68604,70319,71842,73085,74146,74982,75659,76120,76413,76562’,
+growth:‘0,8750,9678,1318,3738,1450,16023,2163,1886,1715,1523,1243,1061,836,677,461,293,149’,
+startYear:8,priority:6,canPrincipal:‘1’,floor:0,cap:0
+});
+
+// ── 保單7：萬事利達 81224099（保誠人壽）被保人：陳韋庭第2張 29歲起 ──
+// 2021/09投保，年繳62,442 USD，現第4年末
+addPolicy({
+name:‘萬事利達2(陳韋庭)’,company:‘保誠人壽’,no:‘81224099’,
+start:17766,rate:3.2,mode:‘hybrid’,
+fixed:‘17766,24429,31832,33330,36737,38529,70273,37411,76144,73411,76144,78674,80997,85911,84680,86090,87333,88326,89110,89871,89871’,
+growth:‘0,6663,7403,1498,3407,1792,31744,0,38733,0,2733,2530,2323,4914,0,1410,1243,993,784,761,0’,
+startYear:9,priority:7,canPrincipal:‘1’,floor:0,cap:0
+});
+
+rebuildAllRatioGrids();
+}
+setToday();
+syncHeader();
+resetDefault();
+</script>
+
+</body>
+</html>
